@@ -1,5 +1,6 @@
 ﻿using ExtendedAPI.Types;
 using Pipliz;
+using Shared;
 using System.Collections.Generic;
 
 namespace SimpleWater
@@ -30,6 +31,19 @@ namespace SimpleWater
             adjacents.Add(Vector3Int.forward);
             adjacents.Add(Vector3Int.right);
             adjacents.Add(Vector3Int.back);
+        }
+
+        public override void OnRightClickOn(Players.Player player, Box<PlayerClickedData> boxedData)
+        {
+            if(null == player || null == boxedData)
+                return;
+
+            ItemTypes.ItemType item = ItemTypes.GetType(boxedData.item1.typeSelected);
+            if(item.IsPlaceable && !item.NeedsBase)
+            {
+                ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, boxedData.item1.typeSelected);
+                ServerManager.TryChangeBlock(boxedData.item1.VoxelBuild, BlockTypes.Builtin.BuiltinBlocks.Air);
+            }
         }
 
         public override void RegisterOnAdd(Vector3Int position, ushort newType, Players.Player causedBy)
