@@ -5,32 +5,16 @@ using System.Collections.Generic;
 
 namespace SimpleWater
 {
-    public class Path
-    {
-        public int distance;
-        public Vector3Int position;
-
-        public Path(int distance, Vector3Int position)
-        {
-            this.distance = distance;
-            this.position = position;
-        }
-    }
-
     [AutoLoadType]
     public class SimpleWater : BaseType
     {
-        private int spreadDistance = 3;
+        private int spreadDistance;
         private int spreadSpeed = 4;
-        private List<Vector3Int> adjacents = new List<Vector3Int>();
 
         public SimpleWater()
         {
             key = "SimpleWater";
-            adjacents.Add(Vector3Int.left);
-            adjacents.Add(Vector3Int.forward);
-            adjacents.Add(Vector3Int.right);
-            adjacents.Add(Vector3Int.back);
+            spreadDistance = SpreadWater.spreadDistance;
         }
 
         public override void OnRightClickOn(Players.Player player, Box<PlayerClickedData> boxedData)
@@ -39,7 +23,7 @@ namespace SimpleWater
                 return;
 
             ItemTypes.ItemType item = ItemTypes.GetType(boxedData.item1.typeSelected);
-            if(item.IsPlaceable && !item.NeedsBase)
+            if(null != item && item.IsPlaceable && !item.NeedsBase) //Check the type that you want to add
             {
                 ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, boxedData.item1.typeSelected, player);
                 ServerManager.TryChangeBlock(boxedData.item1.VoxelBuild, BlockTypes.Builtin.BuiltinBlocks.Air);
@@ -51,15 +35,15 @@ namespace SimpleWater
             ushort waterIndex = ItemTypes.IndexLookup.GetIndex("SimpleWater");
             ushort fakewaterIndex = ItemTypes.IndexLookup.GetIndex("Fake.SimpleWater");
 
-            GetPositionsToSpreadWater(position, out List<Vector3Int>[] bloques);
+            SpreadWater.GetPositionsToSpreadWater(position, out List<Vector3Int>[] typesToAddOrderedByDistance);
 
             //Spread
-            float time = spreadSpeed;
-            for(int i = 0; i < bloques.Length; i++)
+            float time = spreadSpeed;   //It is float because later it use time / 10
+            for(int i = 0; i < typesToAddOrderedByDistance.Length; i++)
             {
-                List<Vector3Int> positions = bloques[i];
+                List<Vector3Int> positions = typesToAddOrderedByDistance[i];
                 if(positions.Count != 0)
-                    Pipliz.Threading.ThreadManager.InvokeOnMainThread(delegate ()
+                    Pipliz.Threading.ThreadManager.InvokeOnMainThread(delegate () //Gives the effect of spread by time
                     {
                         foreach(Vector3Int pos in positions)
                             ServerManager.TryChangeBlock(pos, fakewaterIndex);
@@ -74,6 +58,7 @@ namespace SimpleWater
             ushort waterIndex = ItemTypes.IndexLookup.GetIndex("SimpleWater");
             ushort fakewaterIndex = ItemTypes.IndexLookup.GetIndex("Fake.SimpleWater");
 
+            //List of types that shouldn't be removed
             List<Vector3Int> notRemoveTypes = new List<Vector3Int>();
 
             //Look for Water sources near
@@ -89,18 +74,18 @@ namespace SimpleWater
                     {
                         Vector3Int newPos = new Vector3Int(x, y, z);
                         if(World.TryGetTypeAt(newPos, out ushort posType) && waterIndex == posType)
-                            notRemoveTypes.AddRange(GetPositionsNOTRemove(newPos));
+                            notRemoveTypes.AddRange(SpreadWater.GetPositionsNOTRemove(newPos));
                     }
 
             //Fake water blocks generate by this block of water source
-            GetPositionsToSpreadWater(position, out List<Vector3Int>[] bloques);
+            SpreadWater.GetPositionsToSpreadWater(position, out List<Vector3Int>[] bloques);
 
             float time = spreadSpeed;
             for(int i = 0; i < bloques.Length; i++)
             {
                 List<Vector3Int> positions = bloques[i];
                 if(positions.Count != 0)
-                    Pipliz.Threading.ThreadManager.InvokeOnMainThread(delegate ()
+                    Pipliz.Threading.ThreadManager.InvokeOnMainThread(delegate () //Gives the effect of remove by time
                     {
                         foreach(Vector3Int pos in positions)
                             if(!notRemoveTypes.Contains(pos))
@@ -110,138 +95,5 @@ namespace SimpleWater
                 time += spreadSpeed;
             }
         }
-
-
-        public void GetPositionsToSpreadWater(Vector3Int start, out List<Vector3Int>[] resultado)
-        {
-            resultado = new List<Vector3Int>[spreadDistance + 1];
-
-            Queue<Path> porVisitar = new Queue<Path>();
-            List<Vector3Int> yaVisitados = new List<Vector3Int>();
-            ushort airIndex = ItemTypes.IndexLookup.GetIndex("air");
-            ushort fakewaterIndex = ItemTypes.IndexLookup.GetIndex("Fake.SimpleWater");
-
-            porVisitar.Enqueue(new Path(0, start));
-            while(porVisitar.Count > 0)
-            {
-                Path actual = porVisitar.Dequeue();
-                if(resultado[actual.distance] != null)
-                    resultado[actual.distance].Add(actual.position);
-                else
-                {
-                    List<Vector3Int> lista = new List<Vector3Int>();
-                    lista.Add(actual.position);
-                    resultado[actual.distance] = lista;
-                }
-
-                yaVisitados.Add(actual.position);
-
-                //No buscamos adyacentes si ya estamos a la distancia maxima
-                if(actual.distance == spreadDistance)
-                    continue;
-
-                //Si el bloque inferior es aire, se propaga hacia abajo
-                Vector3Int checkPositionDown = actual.position + Vector3Int.down;
-                if(World.TryGetTypeAt(checkPositionDown, out ushort actualDown) && ( actualDown == airIndex || actualDown == fakewaterIndex ))
-                    porVisitar.Enqueue(new Path(actual.distance, checkPositionDown));
-                else
-                {
-                    //Intentamos propagar hacia los lados
-                    foreach(Vector3Int adjacent in adjacents)
-                    {
-                        Vector3Int checkAdjacent = actual.position + adjacent;
-
-                        //Si ya hemos visitado este bloque, lo ignoramos
-                        if(yaVisitados.Contains(checkAdjacent))
-                            continue;
-
-                        World.TryGetTypeAt(checkAdjacent, out ushort actualAdjacent);
-
-                        //Si el adyacente no es aire lo ignoramos
-                        if(actualAdjacent != airIndex && actualAdjacent != fakewaterIndex)
-                            continue;
-
-                        Vector3Int checkAdjacentDown = checkAdjacent + Vector3Int.down;
-                        World.TryGetTypeAt(checkAdjacentDown, out ushort actualAdjacentDown);
-
-                        //Si el debajo del adyacente es aire, propagamos hacia abajo
-                        if(actualAdjacentDown == airIndex || actualAdjacentDown == fakewaterIndex)
-                            porVisitar.Enqueue(new Path(actual.distance, checkAdjacentDown));
-                        else
-                            porVisitar.Enqueue(new Path(actual.distance + 1, checkAdjacent));
-                    }
-                }
-            }
-
-            //Eliminamos el 1
-            resultado[0].Remove(start);
-        }
-
-        public List<Vector3Int> GetPositionsNOTRemove(Vector3Int start)
-        {
-            Queue<Path> porVisitar = new Queue<Path>();
-            List<Vector3Int> yaVisitados = new List<Vector3Int>();
-            List<Vector3Int> resultado = new List<Vector3Int>();
-            ushort airIndex = ItemTypes.IndexLookup.GetIndex("air");
-            ushort fakewaterIndex = ItemTypes.IndexLookup.GetIndex("Fake.SimpleWater");
-
-            List<Vector3Int> adjacents = new List<Vector3Int>();
-            adjacents.Add(Vector3Int.left);
-            adjacents.Add(Vector3Int.forward);
-            adjacents.Add(Vector3Int.right);
-            adjacents.Add(Vector3Int.back);
-
-            porVisitar.Enqueue(new Path(0, start));
-            while(porVisitar.Count > 0)
-            {
-                Path actual = porVisitar.Dequeue();
-                resultado.Add(actual.position);
-                yaVisitados.Add(actual.position);
-
-                //No buscamos adyacentes si ya estamos a la distancia maxima
-                if(actual.distance == spreadDistance)
-                    continue;
-
-                //Si el bloque inferior es aire, se propaga hacia abajo
-                Vector3Int checkPositionDown = actual.position + Vector3Int.down;
-                if(World.TryGetTypeAt(checkPositionDown, out ushort actualDown) && ( actualDown == airIndex || actualDown == fakewaterIndex ))
-                    porVisitar.Enqueue(new Path(actual.distance, checkPositionDown));
-                else
-                {
-                    //Intentamos propagar hacia los lados
-                    foreach(Vector3Int adjacent in adjacents)
-                    {
-                        Vector3Int checkAdjacent = actual.position + adjacent;
-
-                        //Si ya hemos visitado este bloque, lo ignoramos
-                        if(yaVisitados.Contains(checkAdjacent))
-                            continue;
-
-                        World.TryGetTypeAt(checkAdjacent, out ushort actualAdjacent);
-
-                        //Si el adyacente no es aire lo ignoramos
-                        if(actualAdjacent != airIndex && actualAdjacent != fakewaterIndex)
-                            continue;
-
-                        Vector3Int checkAdjacentDown = checkAdjacent + Vector3Int.down;
-                        World.TryGetTypeAt(checkAdjacentDown, out ushort actualAdjacentDown);
-
-                        //Si el debajo del adyacente es aire, propagamos hacia abajo
-                        if(actualAdjacentDown == airIndex || actualAdjacentDown == fakewaterIndex)
-                            porVisitar.Enqueue(new Path(actual.distance, checkAdjacentDown));
-                        else
-                            porVisitar.Enqueue(new Path(actual.distance + 1, checkAdjacent));
-                    }
-                }
-            }
-
-            //Eliminamos el 1
-            resultado.Remove(start);
-
-            return resultado;
-        }
     }
-
-
-
 }

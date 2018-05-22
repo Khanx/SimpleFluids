@@ -19,7 +19,7 @@ namespace SimpleWater
                 return;
 
             ItemTypes.ItemType item = ItemTypes.GetType(boxedData.item1.typeSelected);
-            if(item.IsPlaceable && !item.NeedsBase)
+            if(null != item && item.IsPlaceable && !item.NeedsBase)
             {
                 ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, boxedData.item1.typeSelected, player);
                 ServerManager.TryChangeBlock(boxedData.item1.VoxelBuild, BlockTypes.Builtin.BuiltinBlocks.Air);

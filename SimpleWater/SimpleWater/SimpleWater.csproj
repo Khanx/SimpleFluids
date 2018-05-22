@@ -54,6 +54,7 @@
     <Compile Include="SimpleWater.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Bucket.cs" />
+    <Compile Include="SpreadWater.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
