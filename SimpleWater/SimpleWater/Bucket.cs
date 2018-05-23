@@ -11,6 +11,9 @@ namespace SimpleWater
 
         public override void OnRightClickWith(Players.Player player, Box<PlayerClickedData> boxedData)
         {
+            if(null == player)
+                return;
+
             Vector3Int position = boxedData.item1.VoxelBuild;
 
             ushort airIndex = ItemTypes.IndexLookup.GetIndex("air");
@@ -38,6 +41,8 @@ namespace SimpleWater
 
         public override void OnRightClickWith(Players.Player player, Box<PlayerClickedData> boxedData)
         {
+            if(null == player)
+                return;
 
             ushort airIndex = ItemTypes.IndexLookup.GetIndex("air");
             ushort waterIndex = ItemTypes.IndexLookup.GetIndex("water");

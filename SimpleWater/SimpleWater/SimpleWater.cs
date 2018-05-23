@@ -25,7 +25,7 @@ namespace SimpleWater
             ItemTypes.ItemType item = ItemTypes.GetType(boxedData.item1.typeSelected);
             if(null != item && item.IsPlaceable && !item.NeedsBase) //Check the type that you want to add
             {
-                ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, boxedData.item1.typeSelected, player);
+                ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, boxedData.item1.typeSelected);
                 ServerManager.TryChangeBlock(boxedData.item1.VoxelBuild, BlockTypes.Builtin.BuiltinBlocks.Air);
             }
         }
@@ -35,7 +35,7 @@ namespace SimpleWater
             ushort waterIndex = ItemTypes.IndexLookup.GetIndex("SimpleWater");
             ushort fakewaterIndex = ItemTypes.IndexLookup.GetIndex("Fake.SimpleWater");
 
-            SpreadWater.GetPositionsToSpreadWater(position, out List<Vector3Int>[] typesToAddOrderedByDistance);
+            List<Vector3Int>[] typesToAddOrderedByDistance = SpreadWater.GetOrderedPositionsToSpreadWater(position, spreadDistance);
 
             //Spread
             float time = spreadSpeed;   //It is float because later it use time / 10
@@ -60,30 +60,19 @@ namespace SimpleWater
 
             //List of types that shouldn't be removed
             List<Vector3Int> notRemoveTypes = new List<Vector3Int>();
+            //Positions where there are water that can affect
+            List<Vector3Int> nearWater = SpreadWater.LookForWater(position, (spreadDistance*2 + 1) );
 
-            //Look for Water sources near
-            Vector3Int pos1 = new Vector3Int(position.x + ( spreadDistance * 3 ), position.y + ( spreadDistance * 3 ), position.z + ( spreadDistance * 3 ));
-            Vector3Int pos2 = new Vector3Int(position.x - ( spreadDistance * 3 ), position.y - ( spreadDistance * 3 ), position.z - ( spreadDistance * 3 ));
-
-            Vector3Int start = Vector3Int.Min(pos1, pos2);
-            Vector3Int end = Vector3Int.Max(pos1, pos2);
-
-            for(int x = start.x; x <= end.x; x++)
-                for(int y = start.y; y <= end.y; y++)
-                    for(int z = start.z; z <= end.z; z++)
-                    {
-                        Vector3Int newPos = new Vector3Int(x, y, z);
-                        if(World.TryGetTypeAt(newPos, out ushort posType) && waterIndex == posType)
-                            notRemoveTypes.AddRange(SpreadWater.GetPositionsNOTRemove(newPos));
-                    }
+            foreach(Vector3Int pos in nearWater)
+                notRemoveTypes.AddRange(SpreadWater.GetPositionsToSpreadWater(pos, spreadDistance));
 
             //Fake water blocks generate by this block of water source
-            SpreadWater.GetPositionsToSpreadWater(position, out List<Vector3Int>[] bloques);
+            List<Vector3Int>[] positionsToRemoveWater = SpreadWater.GetOrderedPositionsToSpreadWater(position, spreadDistance);
 
             float time = spreadSpeed;
-            for(int i = 0; i < bloques.Length; i++)
+            for(int i = 0; i < positionsToRemoveWater.Length; i++)
             {
-                List<Vector3Int> positions = bloques[i];
+                List<Vector3Int> positions = positionsToRemoveWater[i];
                 if(positions.Count != 0)
                     Pipliz.Threading.ThreadManager.InvokeOnMainThread(delegate () //Gives the effect of remove by time
                     {
