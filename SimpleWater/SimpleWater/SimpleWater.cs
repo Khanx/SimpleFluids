@@ -28,6 +28,7 @@ namespace SimpleWater
 
         public override void RegisterOnAdd(Vector3Int position, ushort newType, Players.Player causedBy)
         {
+            ushort airIndex = ItemTypes.IndexLookup.GetIndex("air");
             ushort waterIndex = ItemTypes.IndexLookup.GetIndex("SimpleWater");
             ushort fakewaterIndex = ItemTypes.IndexLookup.GetIndex("Fake.SimpleWater");
 
@@ -35,17 +36,19 @@ namespace SimpleWater
 
             //Spread
             float time = SpreadWater.spreadSpeed;   //It is float because later it use time / 10
-            for(int i = 0; i < typesToAddOrderedByDistance.Length; i++)
-            {
-                List<Vector3Int> positions = typesToAddOrderedByDistance[i];
-                if(positions.Count != 0)
-                    Pipliz.Threading.ThreadManager.InvokeOnMainThread(delegate () //Gives the effect of spread by time
-                    {
-                        foreach(Vector3Int pos in positions)
-                            ServerManager.TryChangeBlock(pos, fakewaterIndex);
-                    }, time / 10);
-                time += SpreadWater.spreadSpeed;
-            }
+            if(typesToAddOrderedByDistance.Length > 0)
+                for(int i = 0; i < typesToAddOrderedByDistance.Length; i++)
+                {
+                    List<Vector3Int> positions = typesToAddOrderedByDistance[i];
+                    if(null != positions && positions.Count != 0)
+                        Pipliz.Threading.ThreadManager.InvokeOnMainThread(delegate () //Gives the effect of spread by time
+                        {
+                            foreach(Vector3Int pos in positions)
+                                if(World.TryGetTypeAt(pos, out ushort posType) && airIndex == posType)
+                                    ServerManager.TryChangeBlock(pos, fakewaterIndex);
+                        }, time / 10);
+                    time += SpreadWater.spreadSpeed;
+                }
         }
 
         public override void RegisterOnRemove(Vector3Int position, ushort type, Players.Player causedBy)
@@ -57,7 +60,7 @@ namespace SimpleWater
             //List of types that shouldn't be removed
             List<Vector3Int> notRemoveTypes = new List<Vector3Int>();
             //Positions where there are water that can affect
-            List<Vector3Int> nearWater = SpreadWater.LookForWater(position, ( SpreadWater.spreadDistance *2 + 1) );
+            List<Vector3Int> nearWater = SpreadWater.LookForWater(position, ( SpreadWater.spreadDistance * 2 + 1 ));
 
             foreach(Vector3Int pos in nearWater)
                 notRemoveTypes.AddRange(SpreadWater.GetPositionsToSpreadWater(pos, SpreadWater.spreadDistance));
@@ -66,19 +69,20 @@ namespace SimpleWater
             List<Vector3Int>[] positionsToRemoveWater = SpreadWater.GetOrderedPositionsToSpreadWater(position, SpreadWater.spreadDistance);
 
             float time = SpreadWater.spreadSpeed;
-            for(int i = 0; i < positionsToRemoveWater.Length; i++)
-            {
-                List<Vector3Int> positions = positionsToRemoveWater[i];
-                if(positions.Count != 0)
-                    Pipliz.Threading.ThreadManager.InvokeOnMainThread(delegate () //Gives the effect of remove by time
-                    {
-                        foreach(Vector3Int pos in positions)
-                            if(!notRemoveTypes.Contains(pos))
-                                if(World.TryGetTypeAt(pos, out ushort posType) && fakewaterIndex == posType)
-                                    ServerManager.TryChangeBlock(pos, airIndex);
-                    }, time / 10);
-                time += SpreadWater.spreadSpeed;
-            }
+            if(positionsToRemoveWater.Length > 0)
+                for(int i = 0; i < positionsToRemoveWater.Length; i++)
+                {
+                    List<Vector3Int> positions = positionsToRemoveWater[i];
+                    if(null != positions && positions.Count != 0)
+                        Pipliz.Threading.ThreadManager.InvokeOnMainThread(delegate () //Gives the effect of remove by time
+                        {
+                            foreach(Vector3Int pos in positions)
+                                if(!notRemoveTypes.Contains(pos))
+                                    if(World.TryGetTypeAt(pos, out ushort posType) && fakewaterIndex == posType)
+                                        ServerManager.TryChangeBlock(pos, airIndex);
+                        }, time / 10);
+                    time += SpreadWater.spreadSpeed;
+                }
         }
     }
 }

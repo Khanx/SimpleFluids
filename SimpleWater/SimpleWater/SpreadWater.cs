@@ -26,7 +26,7 @@ namespace SimpleWater
 
         public static List<Vector3Int>[] GetOrderedPositionsToSpreadWater(Vector3Int start, int distance)
         {
-            List<Vector3Int>[]  orderedPositions = new List<Vector3Int>[distance + 1];
+            List<Vector3Int>[] orderedPositions = new List<Vector3Int>[distance + 1];
 
             Queue<Node> toVisit = new Queue<Node>();
             List<Vector3Int> alreadyVisited = new List<Vector3Int>();

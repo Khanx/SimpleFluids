@@ -25,7 +25,7 @@ namespace SimpleWater
             {
                 ServerManager.TryChangeBlock(position, waterIndex, player);
 
-                Inventory inv =Inventory.GetInventory(player);
+                Inventory inv = Inventory.GetInventory(player);
 
                 inv.TryRemove(oldBucket);
                 if(!inv.TryAdd(newBucket))
@@ -50,12 +50,12 @@ namespace SimpleWater
             ushort oldBucket = ItemTypes.IndexLookup.GetIndex("EmptyWaterBucket");
             ushort newBucket = ItemTypes.IndexLookup.GetIndex("WaterBucket");
 
-            if(World.TryGetTypeAt(boxedData.item1.VoxelHit, out ushort voxelHitType) && (voxelHitType == simplewaterIndex || voxelHitType == waterIndex))
+            if(World.TryGetTypeAt(boxedData.item1.VoxelHit, out ushort voxelHitType) && ( voxelHitType == simplewaterIndex || voxelHitType == waterIndex ))
             {
                 ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, airIndex, player);
 
                 Inventory inv = Inventory.GetInventory(player);
-                
+
                 inv.TryRemove(oldBucket);
                 if(!inv.TryAdd(newBucket))
                     Stockpile.GetStockPile(player).Add(newBucket, 1);

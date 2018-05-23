@@ -33,13 +33,14 @@ namespace SimpleWater
             ushort fakewaterIndex = ItemTypes.IndexLookup.GetIndex("Fake.SimpleWater");
 
             //Remove
-            if(onUpdateAdjacent.changedOldType == fakewaterIndex && onUpdateAdjacent.changedNewType != waterIndex)
+            if(onUpdateAdjacent.changedOldType == fakewaterIndex && onUpdateAdjacent.changedNewType != waterIndex && onUpdateAdjacent.changedNewType != fakewaterIndex)
             {
                 if(SpreadWater.LookForWater(onUpdateAdjacent.updatePosition, SpreadWater.spreadDistance + 1).Count == 0)
                     Pipliz.Threading.ThreadManager.InvokeOnMainThread(delegate () //Gives the effect of spread by time
-                        {
+                    {
+                        if(World.TryGetTypeAt(onUpdateAdjacent.updatePosition, out ushort actualPosType) && actualPosType == fakewaterIndex)
                             ServerManager.TryChangeBlock(onUpdateAdjacent.updatePosition, airIndex);
-                        }, SpreadWater.spreadSpeed/10);
+                    }, SpreadWater.spreadSpeed / 10);
             }
 
             //Add
@@ -47,20 +48,24 @@ namespace SimpleWater
             {
                 List<Vector3Int> nearSourceOfWater = SpreadWater.LookForWater(onUpdateAdjacent.changedPosition, SpreadWater.spreadDistance + 1);
                 if(nearSourceOfWater.Count > 0)
+                {
                     foreach(Vector3Int source in nearSourceOfWater)
                     {
                         List<Vector3Int>[] typesToAddOrderedByDistance = SpreadWater.GetOrderedPositionsToSpreadWater(source, SpreadWater.spreadDistance);
-
                         //Spread
-                        for(int i = 0; i < typesToAddOrderedByDistance.Length; i++)
-                        {
-                            List<Vector3Int> positions = typesToAddOrderedByDistance[i];
-                            if(positions.Count != 0)
-                                foreach(Vector3Int pos in positions)
-                                    ServerManager.TryChangeBlock(pos, fakewaterIndex);
-                        }
+                        if(typesToAddOrderedByDistance.Length > 0)
+                            for(int i = 0; i < typesToAddOrderedByDistance.Length; i++)
+                            {
+                                List<Vector3Int> positions = typesToAddOrderedByDistance[i];
+                                if(null != positions && positions.Count > 0)
+                                    foreach(Vector3Int pos in positions)
+                                        if(World.TryGetTypeAt(pos, out ushort actualPosType) && actualPosType == airIndex)
+                                            ServerManager.TryChangeBlock(pos, fakewaterIndex);
+                            }
                     }
+                }
             }
+
         }
     }
 }
