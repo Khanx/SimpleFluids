@@ -8,13 +8,9 @@ namespace SimpleWater
     [AutoLoadType]
     public class SimpleWater : BaseType
     {
-        private int spreadDistance;
-        private int spreadSpeed = 4;
-
         public SimpleWater()
         {
             key = "SimpleWater";
-            spreadDistance = SpreadWater.spreadDistance;
         }
 
         public override void OnRightClickOn(Players.Player player, Box<PlayerClickedData> boxedData)
@@ -35,10 +31,10 @@ namespace SimpleWater
             ushort waterIndex = ItemTypes.IndexLookup.GetIndex("SimpleWater");
             ushort fakewaterIndex = ItemTypes.IndexLookup.GetIndex("Fake.SimpleWater");
 
-            List<Vector3Int>[] typesToAddOrderedByDistance = SpreadWater.GetOrderedPositionsToSpreadWater(position, spreadDistance);
+            List<Vector3Int>[] typesToAddOrderedByDistance = SpreadWater.GetOrderedPositionsToSpreadWater(position, SpreadWater.spreadDistance);
 
             //Spread
-            float time = spreadSpeed;   //It is float because later it use time / 10
+            float time = SpreadWater.spreadSpeed;   //It is float because later it use time / 10
             for(int i = 0; i < typesToAddOrderedByDistance.Length; i++)
             {
                 List<Vector3Int> positions = typesToAddOrderedByDistance[i];
@@ -48,7 +44,7 @@ namespace SimpleWater
                         foreach(Vector3Int pos in positions)
                             ServerManager.TryChangeBlock(pos, fakewaterIndex);
                     }, time / 10);
-                time += spreadSpeed;
+                time += SpreadWater.spreadSpeed;
             }
         }
 
@@ -61,15 +57,15 @@ namespace SimpleWater
             //List of types that shouldn't be removed
             List<Vector3Int> notRemoveTypes = new List<Vector3Int>();
             //Positions where there are water that can affect
-            List<Vector3Int> nearWater = SpreadWater.LookForWater(position, (spreadDistance*2 + 1) );
+            List<Vector3Int> nearWater = SpreadWater.LookForWater(position, ( SpreadWater.spreadDistance *2 + 1) );
 
             foreach(Vector3Int pos in nearWater)
-                notRemoveTypes.AddRange(SpreadWater.GetPositionsToSpreadWater(pos, spreadDistance));
+                notRemoveTypes.AddRange(SpreadWater.GetPositionsToSpreadWater(pos, SpreadWater.spreadDistance));
 
             //Fake water blocks generate by this block of water source
-            List<Vector3Int>[] positionsToRemoveWater = SpreadWater.GetOrderedPositionsToSpreadWater(position, spreadDistance);
+            List<Vector3Int>[] positionsToRemoveWater = SpreadWater.GetOrderedPositionsToSpreadWater(position, SpreadWater.spreadDistance);
 
-            float time = spreadSpeed;
+            float time = SpreadWater.spreadSpeed;
             for(int i = 0; i < positionsToRemoveWater.Length; i++)
             {
                 List<Vector3Int> positions = positionsToRemoveWater[i];
@@ -81,7 +77,7 @@ namespace SimpleWater
                                 if(World.TryGetTypeAt(pos, out ushort posType) && fakewaterIndex == posType)
                                     ServerManager.TryChangeBlock(pos, airIndex);
                     }, time / 10);
-                time += spreadSpeed;
+                time += SpreadWater.spreadSpeed;
             }
         }
     }

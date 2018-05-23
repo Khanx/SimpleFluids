@@ -19,6 +19,7 @@ namespace SimpleWater
     public static class SpreadWater
     {
         public static int spreadDistance { get; } = 3;
+        public static float spreadSpeed { get; } = 4f;
 
         private static Vector3Int[] adjacents = { Vector3Int.left, Vector3Int.forward, Vector3Int.right, Vector3Int.back };
 
