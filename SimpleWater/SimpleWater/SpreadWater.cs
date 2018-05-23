@@ -1,5 +1,6 @@
-﻿using Pipliz;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Pipliz;
+using Pipliz.JSON;
 
 namespace SimpleWater
 {
@@ -18,11 +19,56 @@ namespace SimpleWater
     [ModLoader.ModManager]
     public static class SpreadWater
     {
-        public static int spreadDistance { get; } = 3;
-        public static float spreadSpeed { get; } = 4f;
+        public const int MAX_DISTANCE = 7;
+        public const int MIN_DISTANCE = 2;
+        public const int DEFAULT_DISTANCE = 3;
+
+        public const float MAX_SPEED = 10;
+        public const float MIN_SPEED = 2;
+        public const float DEFAULT_SPEED = 4;
+
+        public static int spreadDistance;
+        public static float spreadSpeed;
+
+        public static ushort airIndex;
+        public static ushort waterIndex;
+        public static ushort fakewaterIndex;
 
         private static Vector3Int[] adjacents = { Vector3Int.left, Vector3Int.forward, Vector3Int.right, Vector3Int.back };
 
+        [ModLoader.ModCallback(ModLoader.EModCallbackType.AfterAddingBaseTypes, "Khanx.SimpleWater.Load")]
+        public static void Load(Dictionary<string, ItemTypesServer.ItemTypeRaw> a)
+        {
+            airIndex = ItemTypes.IndexLookup.GetIndex("air");
+            waterIndex = ItemTypes.IndexLookup.GetIndex("SimpleWater");
+            fakewaterIndex = ItemTypes.IndexLookup.GetIndex("Fake.SimpleWater");
+
+            try
+            {
+                JSONNode config = JSON.Deserialize("./gamedata/mods/Khanx/SimpleWater/config.json");
+
+                if(!config.TryGetAs<int>("spreadDistance", out spreadDistance))
+                    spreadDistance = 3;
+                else if(spreadDistance > MAX_DISTANCE || spreadDistance < MIN_DISTANCE)
+                {
+                    Log.Write(string.Format("<color=red>Warning: spreadDistance must be between {0} and {1} included</color>", MAX_DISTANCE, MIN_DISTANCE));
+                    spreadDistance = DEFAULT_DISTANCE;
+                }
+
+                if(!config.TryGetAs<float>("spreadSpeed", out spreadSpeed))
+                    spreadSpeed = 4;
+                else if(spreadSpeed > MAX_SPEED || spreadSpeed < MIN_SPEED)
+                {
+                    Log.Write(string.Format("<color=red>Warning: spreadSpeed must be between {0} and {1} included</color>", MAX_SPEED, MIN_SPEED));
+                    spreadSpeed = DEFAULT_SPEED;
+                }
+            }
+            catch(System.Exception)
+            {
+                spreadDistance = DEFAULT_DISTANCE;
+                spreadSpeed = DEFAULT_SPEED;
+            }
+        }
 
         public static List<Vector3Int>[] GetOrderedPositionsToSpreadWater(Vector3Int start, int distance)
         {
@@ -30,9 +76,6 @@ namespace SimpleWater
 
             Queue<Node> toVisit = new Queue<Node>();
             List<Vector3Int> alreadyVisited = new List<Vector3Int>();
-            ushort airIndex = ItemTypes.IndexLookup.GetIndex("air");
-            ushort waterIndex = ItemTypes.IndexLookup.GetIndex("SimpleWater");
-            ushort fakewaterIndex = ItemTypes.IndexLookup.GetIndex("Fake.SimpleWater");
 
             toVisit.Enqueue(new Node(0, start));
             while(toVisit.Count > 0)
@@ -185,9 +228,6 @@ namespace SimpleWater
 
             Queue<Node> toVisit = new Queue<Node>();
             List<Vector3Int> alreadyVisited = new List<Vector3Int>();
-            ushort airIndex = ItemTypes.IndexLookup.GetIndex("air");
-            ushort waterIndex = ItemTypes.IndexLookup.GetIndex("SimpleWater");
-            ushort fakewaterIndex = ItemTypes.IndexLookup.GetIndex("Fake.SimpleWater");
 
             toVisit.Enqueue(new Node(0, start));
             while(toVisit.Count > 0)

@@ -28,23 +28,20 @@ namespace SimpleWater
 
         public override void RegisterOnUpdateAdjacent(ItemTypesServer.OnUpdateData onUpdateAdjacent)
         {
-            ushort airIndex = ItemTypes.IndexLookup.GetIndex("air");
-            ushort waterIndex = ItemTypes.IndexLookup.GetIndex("SimpleWater");
-            ushort fakewaterIndex = ItemTypes.IndexLookup.GetIndex("Fake.SimpleWater");
 
             //Remove
-            if(onUpdateAdjacent.changedOldType == fakewaterIndex && onUpdateAdjacent.changedNewType != waterIndex && onUpdateAdjacent.changedNewType != fakewaterIndex)
+            if(onUpdateAdjacent.changedOldType == SpreadWater.fakewaterIndex && onUpdateAdjacent.changedNewType != SpreadWater.waterIndex && onUpdateAdjacent.changedNewType != SpreadWater.fakewaterIndex)
             {
                 if(SpreadWater.LookForWater(onUpdateAdjacent.updatePosition, SpreadWater.spreadDistance + 1).Count == 0)
                     Pipliz.Threading.ThreadManager.InvokeOnMainThread(delegate () //Gives the effect of spread by time
                     {
-                        if(World.TryGetTypeAt(onUpdateAdjacent.updatePosition, out ushort actualPosType) && actualPosType == fakewaterIndex)
-                            ServerManager.TryChangeBlock(onUpdateAdjacent.updatePosition, airIndex);
+                        if(World.TryGetTypeAt(onUpdateAdjacent.updatePosition, out ushort actualPosType) && actualPosType == SpreadWater.fakewaterIndex)
+                            ServerManager.TryChangeBlock(onUpdateAdjacent.updatePosition, SpreadWater.airIndex);
                     }, SpreadWater.spreadSpeed / 10);
             }
 
             //Add
-            if(onUpdateAdjacent.changedOldType != fakewaterIndex && onUpdateAdjacent.changedNewType == airIndex)
+            if(onUpdateAdjacent.changedOldType != SpreadWater.fakewaterIndex && onUpdateAdjacent.changedNewType == SpreadWater.airIndex)
             {
                 List<Vector3Int> nearSourceOfWater = SpreadWater.LookForWater(onUpdateAdjacent.changedPosition, SpreadWater.spreadDistance + 1);
                 if(nearSourceOfWater.Count > 0)
@@ -59,8 +56,8 @@ namespace SimpleWater
                                 List<Vector3Int> positions = typesToAddOrderedByDistance[i];
                                 if(null != positions && positions.Count > 0)
                                     foreach(Vector3Int pos in positions)
-                                        if(World.TryGetTypeAt(pos, out ushort actualPosType) && actualPosType == airIndex)
-                                            ServerManager.TryChangeBlock(pos, fakewaterIndex);
+                                        if(World.TryGetTypeAt(pos, out ushort actualPosType) && actualPosType == SpreadWater.airIndex)
+                                            ServerManager.TryChangeBlock(pos, SpreadWater.fakewaterIndex);
                             }
                     }
                 }

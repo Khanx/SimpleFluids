@@ -16,14 +16,12 @@ namespace SimpleWater
 
             Vector3Int position = boxedData.item1.VoxelBuild;
 
-            ushort airIndex = ItemTypes.IndexLookup.GetIndex("air");
-            ushort waterIndex = ItemTypes.IndexLookup.GetIndex("SimpleWater");
             ushort oldBucket = ItemTypes.IndexLookup.GetIndex("WaterBucket");
             ushort newBucket = ItemTypes.IndexLookup.GetIndex("EmptyWaterBucket");
 
-            if(World.TryGetTypeAt(position, out ushort actualType) && actualType == airIndex)
+            if(World.TryGetTypeAt(position, out ushort actualType) && actualType == SpreadWater.airIndex)
             {
-                ServerManager.TryChangeBlock(position, waterIndex, player);
+                ServerManager.TryChangeBlock(position, SpreadWater.waterIndex, player);
 
                 Inventory inv = Inventory.GetInventory(player);
 
@@ -44,15 +42,13 @@ namespace SimpleWater
             if(null == player)
                 return;
 
-            ushort airIndex = ItemTypes.IndexLookup.GetIndex("air");
             ushort waterIndex = ItemTypes.IndexLookup.GetIndex("water");
-            ushort simplewaterIndex = ItemTypes.IndexLookup.GetIndex("SimpleWater");
             ushort oldBucket = ItemTypes.IndexLookup.GetIndex("EmptyWaterBucket");
             ushort newBucket = ItemTypes.IndexLookup.GetIndex("WaterBucket");
 
-            if(World.TryGetTypeAt(boxedData.item1.VoxelHit, out ushort voxelHitType) && ( voxelHitType == simplewaterIndex || voxelHitType == waterIndex ))
+            if(World.TryGetTypeAt(boxedData.item1.VoxelHit, out ushort voxelHitType) && ( voxelHitType == SpreadWater.waterIndex || voxelHitType == waterIndex ))
             {
-                ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, airIndex, player);
+                ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, SpreadWater.airIndex, player);
 
                 Inventory inv = Inventory.GetInventory(player);
 
@@ -62,7 +58,7 @@ namespace SimpleWater
             }
             else if(World.TryGetTypeAt(boxedData.item1.VoxelBuild, out ushort voxelBuildType) && voxelBuildType == waterIndex)
             {
-                ServerManager.TryChangeBlock(boxedData.item1.VoxelBuild, airIndex, player);
+                ServerManager.TryChangeBlock(boxedData.item1.VoxelBuild, SpreadWater.airIndex, player);
 
                 Inventory inv = Inventory.GetInventory(player);
 

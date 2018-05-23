@@ -28,9 +28,6 @@ namespace SimpleWater
 
         public override void RegisterOnAdd(Vector3Int position, ushort newType, Players.Player causedBy)
         {
-            ushort airIndex = ItemTypes.IndexLookup.GetIndex("air");
-            ushort waterIndex = ItemTypes.IndexLookup.GetIndex("SimpleWater");
-            ushort fakewaterIndex = ItemTypes.IndexLookup.GetIndex("Fake.SimpleWater");
 
             List<Vector3Int>[] typesToAddOrderedByDistance = SpreadWater.GetOrderedPositionsToSpreadWater(position, SpreadWater.spreadDistance);
 
@@ -44,8 +41,8 @@ namespace SimpleWater
                         Pipliz.Threading.ThreadManager.InvokeOnMainThread(delegate () //Gives the effect of spread by time
                         {
                             foreach(Vector3Int pos in positions)
-                                if(World.TryGetTypeAt(pos, out ushort posType) && airIndex == posType)
-                                    ServerManager.TryChangeBlock(pos, fakewaterIndex);
+                                if(World.TryGetTypeAt(pos, out ushort posType) && SpreadWater.airIndex == posType)
+                                    ServerManager.TryChangeBlock(pos, SpreadWater.fakewaterIndex);
                         }, time / 10);
                     time += SpreadWater.spreadSpeed;
                 }
@@ -53,10 +50,6 @@ namespace SimpleWater
 
         public override void RegisterOnRemove(Vector3Int position, ushort type, Players.Player causedBy)
         {
-            ushort airIndex = ItemTypes.IndexLookup.GetIndex("air");
-            ushort waterIndex = ItemTypes.IndexLookup.GetIndex("SimpleWater");
-            ushort fakewaterIndex = ItemTypes.IndexLookup.GetIndex("Fake.SimpleWater");
-
             //List of types that shouldn't be removed
             List<Vector3Int> notRemoveTypes = new List<Vector3Int>();
             //Positions where there are water that can affect
@@ -78,8 +71,8 @@ namespace SimpleWater
                         {
                             foreach(Vector3Int pos in positions)
                                 if(!notRemoveTypes.Contains(pos))
-                                    if(World.TryGetTypeAt(pos, out ushort posType) && fakewaterIndex == posType)
-                                        ServerManager.TryChangeBlock(pos, airIndex);
+                                    if(World.TryGetTypeAt(pos, out ushort posType) && SpreadWater.fakewaterIndex == posType)
+                                        ServerManager.TryChangeBlock(pos, SpreadWater.airIndex);
                         }, time / 10);
                     time += SpreadWater.spreadSpeed;
                 }
