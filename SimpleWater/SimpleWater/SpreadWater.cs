@@ -4,7 +4,7 @@ using Pipliz.JSON;
 
 namespace SimpleWater
 {
-    public struct Node : System.IComparable
+    public struct Node
     {
         public int distance;
         public Vector3Int position;
@@ -15,18 +15,6 @@ namespace SimpleWater
             this.distance = distance;
             this.position = position;
             this.gravity = gravity;
-        }
-
-        public int CompareTo(object obj)
-        {
-            if(obj is Node)
-            {
-                Node toCompare = (Node)obj;
-
-                return (this.distance + this.gravity) - (toCompare.distance + toCompare.gravity);
-            }
-
-            throw new System.ArgumentException("Trying to compare a object that isn't a Node");
         }
     }
 
@@ -154,7 +142,6 @@ namespace SimpleWater
                     }
             }
 
-            unorderedPositions.Sort();
             List<Vector3Int>[] orderedPositions = new List<Vector3Int>[maxDistance + 1];
 
             foreach(Node e in unorderedPositions)

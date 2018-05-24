@@ -43,9 +43,13 @@ namespace SimpleWater
                             foreach(Vector3Int pos in positions)
                                 if(World.TryGetTypeAt(pos, out ushort posType) && SpreadWater.airIndex == posType)
                                     ServerManager.TryChangeBlock(pos, SpreadWater.fakewaterIndex);
+
+                            //Free Memory
+                            positions.Clear();
                         }, time / 10);
                     time += SpreadWater.spreadSpeed;
                 }
+            
         }
 
         public override void RegisterOnRemove(Vector3Int position, ushort type, Players.Player causedBy)
@@ -73,6 +77,9 @@ namespace SimpleWater
                                 if(!notRemoveTypes.Contains(pos))
                                     if(World.TryGetTypeAt(pos, out ushort posType) && SpreadWater.fakewaterIndex == posType)
                                         ServerManager.TryChangeBlock(pos, SpreadWater.airIndex);
+
+                            //Free Memory
+                            positions.Clear();
                         }, time / 10);
                     time += SpreadWater.spreadSpeed;
                 }
