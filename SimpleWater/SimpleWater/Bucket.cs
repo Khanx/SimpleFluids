@@ -48,7 +48,10 @@ namespace SimpleWater
 
             if(World.TryGetTypeAt(boxedData.item1.VoxelHit, out ushort voxelHitType) && ( voxelHitType == SpreadWater.waterIndex || voxelHitType == waterIndex ))
             {
-                ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, SpreadWater.airIndex, player);
+                if(SpreadWater.LookForWater(boxedData.item1.VoxelHit, SpreadWater.spreadDistance + 1).Count == 0)
+                    ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, SpreadWater.airIndex, player);
+                else
+                    ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, SpreadWater.fakewaterIndex, player);
 
                 Inventory inv = Inventory.GetInventory(player);
 
@@ -58,7 +61,10 @@ namespace SimpleWater
             }
             else if(World.TryGetTypeAt(boxedData.item1.VoxelBuild, out ushort voxelBuildType) && voxelBuildType == waterIndex)
             {
-                ServerManager.TryChangeBlock(boxedData.item1.VoxelBuild, SpreadWater.airIndex, player);
+                if(SpreadWater.LookForWater(boxedData.item1.VoxelBuild, SpreadWater.spreadDistance + 1).Count == 0)
+                    ServerManager.TryChangeBlock(boxedData.item1.VoxelBuild, SpreadWater.airIndex, player);
+                else
+                    ServerManager.TryChangeBlock(boxedData.item1.VoxelBuild, SpreadWater.fakewaterIndex, player);
 
                 Inventory inv = Inventory.GetInventory(player);
 
