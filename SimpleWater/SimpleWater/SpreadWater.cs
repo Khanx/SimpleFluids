@@ -4,15 +4,29 @@ using Pipliz.JSON;
 
 namespace SimpleWater
 {
-    public struct Node
+    public struct Node : System.IComparable
     {
         public int distance;
         public Vector3Int position;
+        public int gravity;
 
-        public Node(int distance, Vector3Int position)
+        public Node(int distance, Vector3Int position, int gravity = 0)
         {
             this.distance = distance;
             this.position = position;
+            this.gravity = gravity;
+        }
+
+        public int CompareTo(object obj)
+        {
+            if(obj is Node)
+            {
+                Node toCompare = (Node)obj;
+
+                return (this.distance + this.gravity) - (toCompare.distance + toCompare.gravity);
+            }
+
+            throw new System.ArgumentException("Trying to compare a object that isn't a Node");
         }
     }
 
@@ -80,12 +94,13 @@ namespace SimpleWater
 
         public static List<Vector3Int>[] GetOrderedPositionsToSpreadWater(Vector3Int start, int distance)
         {
-            List<Vector3Int>[] orderedPositions = new List<Vector3Int>[distance + 1];
+            List<Node> unorderedPositions = new List<Node>();
+            int maxDistance = spreadDistance+1;
 
             Queue<Node> toVisit = new Queue<Node>();
             List<Vector3Int> alreadyVisited = new List<Vector3Int>();
 
-            toVisit.Enqueue(new Node(0, start));
+            toVisit.Enqueue(new Node(0, start, 0));
             while(toVisit.Count > 0)
             {
                 Node current = toVisit.Dequeue();
@@ -94,17 +109,9 @@ namespace SimpleWater
                     continue;
 
                 alreadyVisited.Add(current.position);
-
-                if(orderedPositions[current.distance] != null)
-                    orderedPositions[current.distance].Add(current.position);
-                else
-                {
-                    List<Vector3Int> lista = new List<Vector3Int>();
-                    lista.Add(current.position);
-                    orderedPositions[current.distance] = lista;
-                }
-
-
+                unorderedPositions.Add(current);
+                if(maxDistance < current.distance + current.gravity)
+                    maxDistance = current.distance + current.gravity;
 
                 //We do not look for adjacent ones if we are already at the maximum distance
                 if(current.distance == distance)
@@ -116,7 +123,7 @@ namespace SimpleWater
                     if(actualDown == airIndex || actualDown == fakewaterIndex || actualDown == waterIndex)
                     {
                         if(actualDown != waterIndex)
-                            toVisit.Enqueue(new Node(current.distance, checkPositionDown));
+                            toVisit.Enqueue(new Node(current.distance, checkPositionDown, current.gravity+1));
                     }
                     else
                     {
@@ -140,16 +147,32 @@ namespace SimpleWater
 
                             //If the below the adjacent one is air or water, we spread down
                             if(actualAdjacentDown == airIndex || actualAdjacentDown == fakewaterIndex)
-                                toVisit.Enqueue(new Node(current.distance, checkAdjacentDown));
+                                toVisit.Enqueue(new Node(current.distance, checkAdjacentDown, current.gravity+1));
                             else
-                                toVisit.Enqueue(new Node(current.distance + 1, checkAdjacent));
+                                toVisit.Enqueue(new Node(current.distance + 1, checkAdjacent, current.gravity));
                         }
                     }
+            }
+
+            unorderedPositions.Sort();
+            List<Vector3Int>[] orderedPositions = new List<Vector3Int>[maxDistance + 1];
+
+            foreach(Node e in unorderedPositions)
+            {
+                int realdistance = e.distance + e.gravity;
+                if(orderedPositions[realdistance] == null)
+                {
+                    orderedPositions[realdistance] = new List<Vector3Int>();
+                    orderedPositions[realdistance].Add(e.position);
+                }
+                else
+                    orderedPositions[realdistance].Add(e.position);
             }
 
             //Free memory
             toVisit.Clear();
             alreadyVisited.Clear();
+            unorderedPositions.Clear();
 
             //Remove start
             orderedPositions[0].Remove(start);
