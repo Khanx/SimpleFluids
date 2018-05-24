@@ -19,6 +19,8 @@ namespace SimpleWater
     [ModLoader.ModManager]
     public static class SpreadWater
     {
+        public static string MODPATH;
+
         public const int MAX_DISTANCE = 7;
         public const int MIN_DISTANCE = 2;
         public const int DEFAULT_DISTANCE = 3;
@@ -36,6 +38,12 @@ namespace SimpleWater
 
         private static Vector3Int[] adjacents = { Vector3Int.left, Vector3Int.forward, Vector3Int.right, Vector3Int.back };
 
+        [ModLoader.ModCallback(ModLoader.EModCallbackType.OnAssemblyLoaded, "Khanx.SimpleWater.GetModPath")]
+        public static void GetModPath(string path)
+        {
+            MODPATH = System.IO.Path.GetDirectoryName(path).Replace("\\", "/");
+        }
+
         [ModLoader.ModCallback(ModLoader.EModCallbackType.AfterAddingBaseTypes, "Khanx.SimpleWater.Load")]
         public static void Load(Dictionary<string, ItemTypesServer.ItemTypeRaw> a)
         {
@@ -45,7 +53,7 @@ namespace SimpleWater
 
             try
             {
-                JSONNode config = JSON.Deserialize("./gamedata/mods/Khanx/SimpleWater/config.json");
+                JSONNode config = JSON.Deserialize(MODPATH + "/config.json");
 
                 if(!config.TryGetAs<int>("spreadDistance", out spreadDistance))
                     spreadDistance = 3;
