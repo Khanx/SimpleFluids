@@ -26,6 +26,33 @@ namespace SimpleWater
             }
         }
 
+        public override void RegisterOnUpdateAdjacent(ItemTypesServer.OnUpdateData onUpdateAdjacent)
+        {
+            if(onUpdateAdjacent.changedOldType != SpreadWater.fakewaterIndex && onUpdateAdjacent.changedOldType != SpreadWater.waterIndex && onUpdateAdjacent.changedNewType == SpreadWater.airIndex)
+            {
+                List<Vector3Int>[] typesToAddOrderedByDistance = SpreadWater.GetOrderedPositionsToSpreadWater(onUpdateAdjacent.updatePosition, SpreadWater.spreadDistance);
+
+                //Spread
+                float time = SpreadWater.spreadSpeed;   //It is float because later it use time / 10
+                if(typesToAddOrderedByDistance.Length > 0)
+                    for(int i = 0; i < typesToAddOrderedByDistance.Length; i++)
+                    {
+                        List<Vector3Int> positions = typesToAddOrderedByDistance[i];
+                        if(null != positions && positions.Count != 0)
+                            Pipliz.Threading.ThreadManager.InvokeOnMainThread(delegate () //Gives the effect of spread by time
+                            {
+                                foreach(Vector3Int pos in positions)
+                                    if(World.TryGetTypeAt(pos, out ushort posType) && SpreadWater.airIndex == posType)
+                                        ServerManager.TryChangeBlock(pos, SpreadWater.fakewaterIndex);
+
+                                //Free Memory
+                                positions.Clear();
+                            }, time / 10);
+                        time += SpreadWater.spreadSpeed;
+                    }
+            }
+        }
+
         public override void RegisterOnAdd(Vector3Int position, ushort newType, Players.Player causedBy)
         {
 
