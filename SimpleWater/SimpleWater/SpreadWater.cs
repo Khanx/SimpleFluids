@@ -46,8 +46,8 @@ namespace SimpleWater
             MODPATH = System.IO.Path.GetDirectoryName(path).Replace("\\", "/");
         }
 
-        [ModLoader.ModCallback(ModLoader.EModCallbackType.AfterAddingBaseTypes, "Khanx.SimpleWater.Load")]
-        public static void Load(Dictionary<string, ItemTypesServer.ItemTypeRaw> a)
+        [ModLoader.ModCallback(ModLoader.EModCallbackType.AfterAddingBaseTypes, "Khanx.SimpleWater.LoadConfig")]
+        public static void LoadConfig(Dictionary<string, ItemTypesServer.ItemTypeRaw> a)
         {
             airIndex = ItemTypes.IndexLookup.GetIndex("air");
             waterIndex = ItemTypes.IndexLookup.GetIndex("SimpleWater");
@@ -79,6 +79,29 @@ namespace SimpleWater
                 spreadSpeed = DEFAULT_SPEED;
             }
         }
+
+        [ModLoader.ModCallback(ModLoader.EModCallbackType.OnPlayerHit, "Khanx.SimpleWater.NotKillPlayerOnHitWater")]
+        public static void NotKillPlayerOnHitWater(Players.Player player, ModLoader.OnHitData d)
+        {
+            if(null == player || null == d || d.HitSourceType != ModLoader.OnHitData.EHitSourceType.FallDamage)
+                return;
+
+            Vector3Int position = new Vector3Int(player.Position);
+            ushort hitType = 0;
+
+            do
+            {
+                if(!World.TryGetTypeAt(position, out hitType))
+                    break;
+
+                if(hitType == waterIndex || hitType == fakewaterIndex)
+                    d.ResultDamage = 0;
+
+                position += Vector3Int.down;
+            }
+            while(hitType == airIndex);
+        }
+
 
         public static List<Vector3Int>[] GetOrderedPositionsToSpreadWater(Vector3Int start, int distance)
         {
