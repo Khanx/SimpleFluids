@@ -58,10 +58,10 @@ namespace SimpleWater
                 JSONNode config = JSON.Deserialize(MODPATH + "/config.json");
 
                 if(!config.TryGetAs<int>("spreadDistance", out spreadDistance))
-                    spreadDistance = 3;
+                    spreadDistance = DEFAULT_DISTANCE;
                 else if(spreadDistance > MAX_DISTANCE || spreadDistance < MIN_DISTANCE)
                 {
-                    Log.Write(string.Format("<color=red>Warning: spreadDistance must be between {0} and {1} included</color>", MAX_DISTANCE, MIN_DISTANCE));
+                    Log.Write(string.Format("<color=red>Warning: spreadDistance must be between {0} and {1} included</color>", MIN_DISTANCE, MAX_DISTANCE));
                     spreadDistance = DEFAULT_DISTANCE;
                 }
 
@@ -69,7 +69,7 @@ namespace SimpleWater
                     spreadSpeed = 4;
                 else if(spreadSpeed > MAX_SPEED || spreadSpeed < MIN_SPEED)
                 {
-                    Log.Write(string.Format("<color=red>Warning: spreadSpeed must be between {0} and {1} included</color>", MAX_SPEED, MIN_SPEED));
+                    Log.Write(string.Format("<color=red>Warning: spreadSpeed must be between {0} and {1} included</color>", MIN_SPEED, MAX_SPEED));
                     spreadSpeed = DEFAULT_SPEED;
                 }
             }
@@ -106,7 +106,7 @@ namespace SimpleWater
         public static List<Vector3Int>[] GetOrderedPositionsToSpreadWater(Vector3Int start, int distance)
         {
             List<Node> unorderedPositions = new List<Node>();
-            int maxDistance = spreadDistance+1;
+            int maxDistance = spreadDistance + 1;
 
             Queue<Node> toVisit = new Queue<Node>();
             List<Vector3Int> alreadyVisited = new List<Vector3Int>();
@@ -134,7 +134,7 @@ namespace SimpleWater
                     if(actualDown == airIndex || actualDown == fakewaterIndex || actualDown == waterIndex)
                     {
                         if(actualDown != waterIndex)
-                            toVisit.Enqueue(new Node(current.distance, checkPositionDown, current.gravity+1));
+                            toVisit.Enqueue(new Node(current.distance, checkPositionDown, current.gravity + 1));
                     }
                     else
                     {
@@ -158,7 +158,7 @@ namespace SimpleWater
 
                             //If the below the adjacent one is air or water, we spread down
                             if(actualAdjacentDown == airIndex || actualAdjacentDown == fakewaterIndex)
-                                toVisit.Enqueue(new Node(current.distance, checkAdjacentDown, current.gravity+1));
+                                toVisit.Enqueue(new Node(current.distance, checkAdjacentDown, current.gravity + 1));
                             else
                                 toVisit.Enqueue(new Node(current.distance + 1, checkAdjacent, current.gravity));
                         }
