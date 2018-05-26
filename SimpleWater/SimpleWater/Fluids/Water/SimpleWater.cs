@@ -3,7 +3,7 @@ using Pipliz;
 using Shared;
 using System.Collections.Generic;
 
-namespace SimpleWater
+namespace SimpleWater.Water
 {
     [AutoLoadType]
     public class SimpleWater : BaseType
@@ -13,6 +13,7 @@ namespace SimpleWater
             key = "SimpleWater";
         }
 
+        //This method allows to "build" (replace) this block [CALLBACK]
         public override void OnRightClickOn(Players.Player player, Box<PlayerClickedData> boxedData)
         {
             if(null == player || null == boxedData)
@@ -26,14 +27,15 @@ namespace SimpleWater
             }
         }
 
+        //This method spread water when change the status of one block adjacent of this one [CALLBACK]
         public override void RegisterOnUpdateAdjacent(ItemTypesServer.OnUpdateData onUpdateAdjacent)
         {
-            if(onUpdateAdjacent.changedOldType != SpreadWater.fakewaterIndex && onUpdateAdjacent.changedOldType != SpreadWater.waterIndex && onUpdateAdjacent.changedNewType == SpreadWater.airIndex)
+            if(onUpdateAdjacent.changedOldType != SpreadFluids.fakewaterIndex && onUpdateAdjacent.changedOldType != SpreadFluids.waterIndex && onUpdateAdjacent.changedNewType == SpreadFluids.airIndex)
             {
-                List<Vector3Int>[] typesToAddOrderedByDistance = SpreadWater.GetOrderedPositionsToSpreadWater(onUpdateAdjacent.updatePosition, SpreadWater.spreadDistance);
+                List<Vector3Int>[] typesToAddOrderedByDistance = SpreadFluids.GetOrderedPositionsToSpread(onUpdateAdjacent.updatePosition, SpreadFluids.spreadDistance);
 
                 //Spread
-                float time = SpreadWater.spreadSpeed;   //It is float because later it use time / 10
+                float time = SpreadFluids.spreadSpeed;   //It is float because later it use time / 10
                 if(typesToAddOrderedByDistance.Length > 0)
                     for(int i = 0; i < typesToAddOrderedByDistance.Length; i++)
                     {
@@ -42,24 +44,25 @@ namespace SimpleWater
                             Pipliz.Threading.ThreadManager.InvokeOnMainThread(delegate () //Gives the effect of spread by time
                             {
                                 foreach(Vector3Int pos in positions)
-                                    if(World.TryGetTypeAt(pos, out ushort posType) && SpreadWater.airIndex == posType)
-                                        ServerManager.TryChangeBlock(pos, SpreadWater.fakewaterIndex);
+                                    if(World.TryGetTypeAt(pos, out ushort posType) && SpreadFluids.airIndex == posType)
+                                        ServerManager.TryChangeBlock(pos, SpreadFluids.fakewaterIndex);
 
                                 //Free Memory
                                 positions.Clear();
                             }, time / 10);
-                        time += SpreadWater.spreadSpeed;
+                        time += SpreadFluids.spreadSpeed;
                     }
             }
         }
 
+        //Spread the water when this block is added to the world
         public override void RegisterOnAdd(Vector3Int position, ushort newType, Players.Player causedBy)
         {
 
-            List<Vector3Int>[] typesToAddOrderedByDistance = SpreadWater.GetOrderedPositionsToSpreadWater(position, SpreadWater.spreadDistance);
+            List<Vector3Int>[] typesToAddOrderedByDistance = SpreadFluids.GetOrderedPositionsToSpread(position, SpreadFluids.spreadDistance);
 
             //Spread
-            float time = SpreadWater.spreadSpeed;   //It is float because later it use time / 10
+            float time = SpreadFluids.spreadSpeed;   //It is float because later it use time / 10
             if(typesToAddOrderedByDistance.Length > 0)
                 for(int i = 0; i < typesToAddOrderedByDistance.Length; i++)
                 {
@@ -68,31 +71,32 @@ namespace SimpleWater
                         Pipliz.Threading.ThreadManager.InvokeOnMainThread(delegate () //Gives the effect of spread by time
                         {
                             foreach(Vector3Int pos in positions)
-                                if(World.TryGetTypeAt(pos, out ushort posType) && SpreadWater.airIndex == posType)
-                                    ServerManager.TryChangeBlock(pos, SpreadWater.fakewaterIndex);
+                                if(World.TryGetTypeAt(pos, out ushort posType) && SpreadFluids.airIndex == posType)
+                                    ServerManager.TryChangeBlock(pos, SpreadFluids.fakewaterIndex);
 
                             //Free Memory
                             positions.Clear();
                         }, time / 10);
-                    time += SpreadWater.spreadSpeed;
+                    time += SpreadFluids.spreadSpeed;
                 }
-            
+
         }
 
+        //Remove the water produced by this block
         public override void RegisterOnRemove(Vector3Int position, ushort type, Players.Player causedBy)
         {
             //List of types that shouldn't be removed
             List<Vector3Int> notRemoveTypes = new List<Vector3Int>();
             //Positions where there are water that can affect
-            List<Vector3Int> nearWater = SpreadWater.LookForWater(position, ( SpreadWater.spreadDistance * 2 + 1 ));
+            List<Vector3Int> nearWater = SpreadFluids.LookForWater(position, ( SpreadFluids.spreadDistance * 2 + 1 ));
 
             foreach(Vector3Int pos in nearWater)
-                notRemoveTypes.AddRange(SpreadWater.GetPositionsToSpreadWater(pos, SpreadWater.spreadDistance));
+                notRemoveTypes.AddRange(SpreadFluids.GetUnorderedPositionsToSpread(pos, SpreadFluids.spreadDistance));
 
             //Fake water blocks generate by this block of water source
-            List<Vector3Int>[] positionsToRemoveWater = SpreadWater.GetOrderedPositionsToSpreadWater(position, SpreadWater.spreadDistance);
+            List<Vector3Int>[] positionsToRemoveWater = SpreadFluids.GetOrderedPositionsToSpread(position, SpreadFluids.spreadDistance);
 
-            float time = SpreadWater.spreadSpeed;
+            float time = SpreadFluids.spreadSpeed;
             if(positionsToRemoveWater.Length > 0)
                 for(int i = 0; i < positionsToRemoveWater.Length; i++)
                 {
@@ -102,13 +106,13 @@ namespace SimpleWater
                         {
                             foreach(Vector3Int pos in positions)
                                 if(!notRemoveTypes.Contains(pos))
-                                    if(World.TryGetTypeAt(pos, out ushort posType) && SpreadWater.fakewaterIndex == posType)
-                                        ServerManager.TryChangeBlock(pos, SpreadWater.airIndex);
+                                    if(World.TryGetTypeAt(pos, out ushort posType) && SpreadFluids.fakewaterIndex == posType)
+                                        ServerManager.TryChangeBlock(pos, SpreadFluids.airIndex);
 
                             //Free Memory
                             positions.Clear();
                         }, time / 10);
-                    time += SpreadWater.spreadSpeed;
+                    time += SpreadFluids.spreadSpeed;
                 }
         }
     }

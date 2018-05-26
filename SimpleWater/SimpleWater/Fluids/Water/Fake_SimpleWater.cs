@@ -3,7 +3,7 @@ using Pipliz;
 using Shared;
 using System.Collections.Generic;
 
-namespace SimpleWater
+namespace SimpleWater.Water
 {
     [AutoLoadType]
     public class Fake_SimpleWater : BaseType
@@ -13,6 +13,7 @@ namespace SimpleWater
             key = "Fake.SimpleWater";
         }
 
+        //This method allows to "build" (replace) this block [CALLBACK]
         public override void OnRightClickOn(Players.Player player, Box<PlayerClickedData> boxedData)
         {
             if(null == player || null == boxedData)
@@ -30,25 +31,25 @@ namespace SimpleWater
         {
 
             //Remove
-            if(onUpdateAdjacent.changedOldType == SpreadWater.fakewaterIndex && onUpdateAdjacent.changedNewType != SpreadWater.waterIndex && onUpdateAdjacent.changedNewType != SpreadWater.fakewaterIndex)
+            if(onUpdateAdjacent.changedOldType == SpreadFluids.fakewaterIndex && onUpdateAdjacent.changedNewType != SpreadFluids.waterIndex && onUpdateAdjacent.changedNewType != SpreadFluids.fakewaterIndex)
             {
-                if(SpreadWater.LookForWater(onUpdateAdjacent.updatePosition, SpreadWater.spreadDistance + 1).Count == 0)
+                if(SpreadFluids.LookForWater(onUpdateAdjacent.updatePosition, SpreadFluids.spreadDistance + 1).Count == 0)
                     Pipliz.Threading.ThreadManager.InvokeOnMainThread(delegate () //Gives the effect of spread by time
                     {
-                        if(World.TryGetTypeAt(onUpdateAdjacent.updatePosition, out ushort actualPosType) && actualPosType == SpreadWater.fakewaterIndex)
-                            ServerManager.TryChangeBlock(onUpdateAdjacent.updatePosition, SpreadWater.airIndex);
-                    }, SpreadWater.spreadSpeed / 10);
+                        if(World.TryGetTypeAt(onUpdateAdjacent.updatePosition, out ushort actualPosType) && actualPosType == SpreadFluids.fakewaterIndex)
+                            ServerManager.TryChangeBlock(onUpdateAdjacent.updatePosition, SpreadFluids.airIndex);
+                    }, SpreadFluids.spreadSpeed / 10);
             }
 
             //Add
-            if(onUpdateAdjacent.changedOldType != SpreadWater.fakewaterIndex && onUpdateAdjacent.changedNewType == SpreadWater.airIndex)
+            if(onUpdateAdjacent.changedOldType != SpreadFluids.fakewaterIndex && onUpdateAdjacent.changedNewType == SpreadFluids.airIndex)
             {
-                List<Vector3Int> nearSourceOfWater = SpreadWater.LookForWater(onUpdateAdjacent.changedPosition, SpreadWater.spreadDistance + 1);
+                List<Vector3Int> nearSourceOfWater = SpreadFluids.LookForWater(onUpdateAdjacent.changedPosition, SpreadFluids.spreadDistance + 1);
                 if(nearSourceOfWater.Count > 0)
                 {
                     foreach(Vector3Int source in nearSourceOfWater)
                     {
-                        List<Vector3Int>[] typesToAddOrderedByDistance = SpreadWater.GetOrderedPositionsToSpreadWater(source, SpreadWater.spreadDistance);
+                        List<Vector3Int>[] typesToAddOrderedByDistance = SpreadFluids.GetOrderedPositionsToSpread(source, SpreadFluids.spreadDistance);
                         //Spread
                         if(typesToAddOrderedByDistance.Length > 0)
                             for(int i = 0; i < typesToAddOrderedByDistance.Length; i++)
@@ -56,13 +57,12 @@ namespace SimpleWater
                                 List<Vector3Int> positions = typesToAddOrderedByDistance[i];
                                 if(null != positions && positions.Count > 0)
                                     foreach(Vector3Int pos in positions)
-                                        if(World.TryGetTypeAt(pos, out ushort actualPosType) && actualPosType == SpreadWater.airIndex)
-                                            ServerManager.TryChangeBlock(pos, SpreadWater.fakewaterIndex);
+                                        if(World.TryGetTypeAt(pos, out ushort actualPosType) && actualPosType == SpreadFluids.airIndex)
+                                            ServerManager.TryChangeBlock(pos, SpreadFluids.fakewaterIndex);
                             }
                     }
-                }
-            }
-
+                } //nearSourceOfWater > 0
+            }   // Add
         }
     }
 }

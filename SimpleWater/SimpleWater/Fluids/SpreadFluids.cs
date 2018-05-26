@@ -19,7 +19,7 @@ namespace SimpleWater
     }
 
     [ModLoader.ModManager]
-    public static class SpreadWater
+    public static class SpreadFluids
     {
         public static string MODPATH;
 
@@ -66,7 +66,7 @@ namespace SimpleWater
                 }
 
                 if(!config.TryGetAs<float>("spreadSpeed", out spreadSpeed))
-                    spreadSpeed = 4;
+                    spreadSpeed = DEFAULT_SPEED;
                 else if(spreadSpeed > MAX_SPEED || spreadSpeed < MIN_SPEED)
                 {
                     Log.Write(string.Format("<color=red>Warning: spreadSpeed must be between {0} and {1} included</color>", MIN_SPEED, MAX_SPEED));
@@ -103,7 +103,7 @@ namespace SimpleWater
         }
 
 
-        public static List<Vector3Int>[] GetOrderedPositionsToSpreadWater(Vector3Int start, int distance)
+        public static List<Vector3Int>[] GetOrderedPositionsToSpread(Vector3Int start, int distance)
         {
             List<Node> unorderedPositions = new List<Node>();
             int maxDistance = spreadDistance + 1;
@@ -190,7 +190,7 @@ namespace SimpleWater
             return orderedPositions;
         }
 
-        public static List<Vector3Int> GetPositionsToSpreadWater(Vector3Int start, int distance)
+        public static List<Vector3Int> GetUnorderedPositionsToSpread(Vector3Int start, int distance)
         {
             List<Vector3Int> resultL = new List<Vector3Int>();
 
