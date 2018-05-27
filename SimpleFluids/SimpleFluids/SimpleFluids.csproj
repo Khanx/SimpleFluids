@@ -7,8 +7,8 @@
     <ProjectGuid>{5AEB2C3D-450F-4A68-85E8-B598D6E46EC2}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SimpleWater</RootNamespace>
-    <AssemblyName>SimpleWater</AssemblyName>
+    <RootNamespace>SimpleFluids</RootNamespace>
+    <AssemblyName>SimpleFluids</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -50,12 +50,20 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Buckets\EmptyWaterBucket.cs" />
+    <Compile Include="Buckets\EmptyBucket.cs" />
+    <Compile Include="Buckets\LavaBucket.cs" />
     <Compile Include="Buckets\WaterBucket.cs" />
-    <Compile Include="Fluids\Water\Fake_SimpleWater.cs" />
+    <Compile Include="Fluids\FakeFluid.cs" />
+    <Compile Include="Fluids\Fluid.cs" />
+    <Compile Include="Fluids\Lava\FakeSimpleLava.cs" />
+    <Compile Include="Fluids\Lava\SimpleLava.cs" />
+    <Compile Include="Fluids\Lava\Lava.cs" />
+    <Compile Include="Fluids\Water\FakeSimpleWater.cs" />
     <Compile Include="Fluids\Water\SimpleWater.cs" />
+    <Compile Include="Fluids\Water\Water.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Fluids\SpreadFluids.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

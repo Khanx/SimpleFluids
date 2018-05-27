@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
+using BlockTypes.Builtin;
 using Pipliz;
-using Pipliz.JSON;
 
-namespace SimpleWater
+
+namespace SimpleFluids
 {
     public struct Node
     {
@@ -23,90 +24,18 @@ namespace SimpleWater
     {
         public static string MODPATH;
 
-        public const int MAX_DISTANCE = 7;
-        public const int MIN_DISTANCE = 2;
-        public const int DEFAULT_DISTANCE = 3;
-
-        public const float MAX_SPEED = 10;
-        public const float MIN_SPEED = 2;
-        public const float DEFAULT_SPEED = 4;
-
-        public static int spreadDistance;
-        public static float spreadSpeed;
-
-        public static ushort airIndex;
-        public static ushort waterIndex;
-        public static ushort fakewaterIndex;
-
         private static Vector3Int[] adjacents = { Vector3Int.left, Vector3Int.forward, Vector3Int.right, Vector3Int.back };
 
-        [ModLoader.ModCallback(ModLoader.EModCallbackType.OnAssemblyLoaded, "Khanx.SimpleWater.GetModPath")]
+        [ModLoader.ModCallback(ModLoader.EModCallbackType.OnAssemblyLoaded, "Khanx.SimpleFluids.GetModPath")]
         public static void GetModPath(string path)
         {
             MODPATH = System.IO.Path.GetDirectoryName(path).Replace("\\", "/");
         }
 
-        [ModLoader.ModCallback(ModLoader.EModCallbackType.AfterAddingBaseTypes, "Khanx.SimpleWater.LoadConfig")]
-        public static void LoadConfig(Dictionary<string, ItemTypesServer.ItemTypeRaw> a)
-        {
-            airIndex = ItemTypes.IndexLookup.GetIndex("air");
-            waterIndex = ItemTypes.IndexLookup.GetIndex("SimpleWater");
-            fakewaterIndex = ItemTypes.IndexLookup.GetIndex("Fake.SimpleWater");
-
-            try
-            {
-                JSONNode config = JSON.Deserialize(MODPATH + "/config.json");
-
-                if(!config.TryGetAs<int>("spreadDistance", out spreadDistance))
-                    spreadDistance = DEFAULT_DISTANCE;
-                else if(spreadDistance > MAX_DISTANCE || spreadDistance < MIN_DISTANCE)
-                {
-                    Log.Write(string.Format("<color=red>Warning: spreadDistance must be between {0} and {1} included</color>", MIN_DISTANCE, MAX_DISTANCE));
-                    spreadDistance = DEFAULT_DISTANCE;
-                }
-
-                if(!config.TryGetAs<float>("spreadSpeed", out spreadSpeed))
-                    spreadSpeed = DEFAULT_SPEED;
-                else if(spreadSpeed > MAX_SPEED || spreadSpeed < MIN_SPEED)
-                {
-                    Log.Write(string.Format("<color=red>Warning: spreadSpeed must be between {0} and {1} included</color>", MIN_SPEED, MAX_SPEED));
-                    spreadSpeed = DEFAULT_SPEED;
-                }
-            }
-            catch(System.Exception)
-            {
-                spreadDistance = DEFAULT_DISTANCE;
-                spreadSpeed = DEFAULT_SPEED;
-            }
-        }
-
-        [ModLoader.ModCallback(ModLoader.EModCallbackType.OnPlayerHit, "Khanx.SimpleWater.NotKillPlayerOnHitWater")]
-        public static void NotKillPlayerOnHitWater(Players.Player player, ModLoader.OnHitData d)
-        {
-            if(null == player || null == d || d.HitSourceType != ModLoader.OnHitData.EHitSourceType.FallDamage)
-                return;
-
-            Vector3Int position = new Vector3Int(player.Position);
-            ushort hitType = 0;
-
-            do
-            {
-                if(!World.TryGetTypeAt(position, out hitType))
-                    break;
-
-                if(hitType == waterIndex || hitType == fakewaterIndex)
-                    d.ResultDamage = 0;
-
-                position += Vector3Int.down;
-            }
-            while(hitType == airIndex);
-        }
-
-
-        public static List<Vector3Int>[] GetOrderedPositionsToSpread(Vector3Int start, int distance)
+        public static List<Vector3Int>[] GetOrderedPositionsToSpread(Vector3Int start, int distance, ushort fluid, ushort fakeFluid)
         {
             List<Node> unorderedPositions = new List<Node>();
-            int maxDistance = spreadDistance + 1;
+            int maxDistance = distance + 1;
 
             Queue<Node> toVisit = new Queue<Node>();
             List<Vector3Int> alreadyVisited = new List<Vector3Int>();
@@ -131,9 +60,9 @@ namespace SimpleWater
                 //If the lower block is air, it propagates downward
                 Vector3Int checkPositionDown = current.position + Vector3Int.down;
                 if(World.TryGetTypeAt(checkPositionDown, out ushort actualDown))
-                    if(actualDown == airIndex || actualDown == fakewaterIndex || actualDown == waterIndex)
+                    if(actualDown == BuiltinBlocks.Air || actualDown == fakeFluid || actualDown == fluid)
                     {
-                        if(actualDown != waterIndex)
+                        if(actualDown != fluid)
                             toVisit.Enqueue(new Node(current.distance, checkPositionDown, current.gravity + 1));
                     }
                     else
@@ -150,14 +79,14 @@ namespace SimpleWater
                             World.TryGetTypeAt(checkAdjacent, out ushort actualAdjacent);
 
                             //If the adjacent one is not air or water, we ignore it
-                            if(actualAdjacent != airIndex && actualAdjacent != fakewaterIndex)
+                            if(actualAdjacent != BuiltinBlocks.Air && actualAdjacent != fakeFluid)
                                 continue;
 
                             Vector3Int checkAdjacentDown = checkAdjacent + Vector3Int.down;
                             World.TryGetTypeAt(checkAdjacentDown, out ushort actualAdjacentDown);
 
                             //If the below the adjacent one is air or water, we spread down
-                            if(actualAdjacentDown == airIndex || actualAdjacentDown == fakewaterIndex)
+                            if(actualAdjacentDown == BuiltinBlocks.Air || actualAdjacentDown == fakeFluid)
                                 toVisit.Enqueue(new Node(current.distance, checkAdjacentDown, current.gravity + 1));
                             else
                                 toVisit.Enqueue(new Node(current.distance + 1, checkAdjacent, current.gravity));
@@ -190,15 +119,12 @@ namespace SimpleWater
             return orderedPositions;
         }
 
-        public static List<Vector3Int> GetUnorderedPositionsToSpread(Vector3Int start, int distance)
+        public static List<Vector3Int> GetUnorderedPositionsToSpread(Vector3Int start, int distance, ushort fluid, ushort fakeFluid)
         {
             List<Vector3Int> resultL = new List<Vector3Int>();
 
             Queue<Node> toVisit = new Queue<Node>();
             List<Vector3Int> alreadyVisited = new List<Vector3Int>();
-            ushort airIndex = ItemTypes.IndexLookup.GetIndex("air");
-            ushort waterIndex = ItemTypes.IndexLookup.GetIndex("SimpleWater");
-            ushort fakewaterIndex = ItemTypes.IndexLookup.GetIndex("Fake.SimpleWater");
 
             toVisit.Enqueue(new Node(0, start));
             while(toVisit.Count > 0)
@@ -219,9 +145,9 @@ namespace SimpleWater
                 //If the lower block is air, it propagates downward
                 Vector3Int checkPositionDown = current.position + Vector3Int.down;
                 if(World.TryGetTypeAt(checkPositionDown, out ushort actualDown))
-                    if(actualDown == airIndex || actualDown == fakewaterIndex || actualDown == waterIndex)
+                    if(actualDown == BuiltinBlocks.Air || actualDown == fakeFluid || actualDown == fluid)
                     {
-                        if(actualDown != waterIndex)
+                        if(actualDown != fluid)
                             toVisit.Enqueue(new Node(current.distance, checkPositionDown));
                     }
                     else
@@ -238,14 +164,14 @@ namespace SimpleWater
                             World.TryGetTypeAt(checkAdjacent, out ushort actualAdjacent);
 
                             //If the adjacent one is not air or water, we ignore it
-                            if(actualAdjacent != airIndex && actualAdjacent != fakewaterIndex)
+                            if(actualAdjacent != BuiltinBlocks.Air && actualAdjacent != fakeFluid)
                                 continue;
 
                             Vector3Int checkAdjacentDown = checkAdjacent + Vector3Int.down;
                             World.TryGetTypeAt(checkAdjacentDown, out ushort actualAdjacentDown);
 
                             //If the below the adjacent one is air or water, we spread down
-                            if(actualAdjacentDown == airIndex || actualAdjacentDown == fakewaterIndex)
+                            if(actualAdjacentDown == BuiltinBlocks.Air || actualAdjacentDown == fakeFluid)
                                 toVisit.Enqueue(new Node(current.distance, checkAdjacentDown));
                             else
                                 toVisit.Enqueue(new Node(current.distance + 1, checkAdjacent));
@@ -263,7 +189,7 @@ namespace SimpleWater
             return resultL;
         }
 
-        public static List<Vector3Int> LookForWater(Vector3Int start, int distance)
+        public static List<Vector3Int> LookForSources(Vector3Int start, int distance, ushort fluid, ushort fakeFluid)
         {
             List<Vector3Int> resultL = new List<Vector3Int>();
 
@@ -289,11 +215,11 @@ namespace SimpleWater
                 {
                     if(World.TryGetTypeAt(checkPositionDown, out ushort actualDown))
                     {
-                        if(actualDown == fakewaterIndex)
+                        if(actualDown == fakeFluid)
                         {
                             toVisit.Enqueue(new Node(current.distance, checkPositionDown));
                         }
-                        else if(actualDown == waterIndex)
+                        else if(actualDown == fluid)
                         {
                             resultL.Add(checkPositionDown);
                         }
@@ -306,11 +232,11 @@ namespace SimpleWater
                 {
                     if(World.TryGetTypeAt(checkPositionUp, out ushort actualUp))
                     {
-                        if(actualUp == fakewaterIndex)
+                        if(actualUp == fakeFluid)
                         {
                             toVisit.Enqueue(new Node(current.distance, checkPositionUp));
                         }
-                        else if(( actualUp == waterIndex ))
+                        else if(( actualUp == fluid ))
                         {
                             resultL.Add(checkPositionUp);
                         }
@@ -327,11 +253,11 @@ namespace SimpleWater
                     {
                         if(World.TryGetTypeAt(checkAdjacent, out ushort actualAdjacent))
                         {
-                            if(actualAdjacent == fakewaterIndex)
+                            if(actualAdjacent == fakeFluid)
                             {
                                 toVisit.Enqueue(new Node(current.distance + 1, checkAdjacent));
                             }
-                            else if(actualAdjacent == waterIndex)
+                            else if(actualAdjacent == fluid)
                             {
                                 resultL.Add(checkAdjacent);
                                 toVisit.Enqueue(new Node(current.distance + 1, checkAdjacent));
@@ -343,11 +269,11 @@ namespace SimpleWater
                             {
                                 if(World.TryGetTypeAt(checkAdjacentDown, out ushort actualAdjacentDown))
                                 {
-                                    if(actualAdjacentDown == fakewaterIndex)
+                                    if(actualAdjacentDown == fakeFluid)
                                     {
                                         toVisit.Enqueue(new Node(current.distance, checkAdjacentDown));
                                     }
-                                    else if(actualAdjacentDown == waterIndex)
+                                    else if(actualAdjacentDown == fluid)
                                     {
                                         resultL.Add(checkAdjacentDown);
                                         toVisit.Enqueue(new Node(current.distance, checkAdjacentDown));
@@ -361,9 +287,9 @@ namespace SimpleWater
                             {
                                 if(World.TryGetTypeAt(checkAdjacentUp, out ushort actualAdjacentUp))
                                 {
-                                    if(actualAdjacentUp == fakewaterIndex)
+                                    if(actualAdjacentUp == fakeFluid)
                                         toVisit.Enqueue(new Node(current.distance, checkAdjacentUp));
-                                    else if(actualAdjacentUp == waterIndex)
+                                    else if(actualAdjacentUp == fluid)
                                     {
                                         resultL.Add(checkAdjacentUp);
                                         toVisit.Enqueue(new Node(current.distance, checkAdjacentUp));
@@ -384,6 +310,5 @@ namespace SimpleWater
 
             return resultL;
         }
-
     }
 }

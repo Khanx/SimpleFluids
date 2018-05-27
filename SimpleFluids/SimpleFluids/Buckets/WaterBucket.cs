@@ -1,13 +1,15 @@
-﻿using ExtendedAPI.Types;
+﻿using BlockTypes.Builtin;
+using ExtendedAPI.Types;
 using Pipliz;
 using Shared;
 
-namespace SimpleWater.Buckets
+
+namespace SimpleFluids.Buckets
 {
     [AutoLoadType]
     public class WaterBucket : BaseType
     {
-        public WaterBucket() { key = "WaterBucket"; }
+        public WaterBucket() { key = "Khanx.SimpleFluids.WaterBucket"; }
 
         public override void OnRightClickWith(Players.Player player, Box<PlayerClickedData> boxedData)
         {
@@ -16,12 +18,12 @@ namespace SimpleWater.Buckets
 
             Vector3Int position = boxedData.item1.VoxelBuild;
 
-            ushort oldBucket = ItemTypes.IndexLookup.GetIndex("WaterBucket");
-            ushort newBucket = ItemTypes.IndexLookup.GetIndex("EmptyWaterBucket");
+            ushort oldBucket = ItemTypes.IndexLookup.GetIndex("Khanx.SimpleFluids.WaterBucket");
+            ushort newBucket = ItemTypes.IndexLookup.GetIndex("Khanx.SimpleFluids.EmptyBucket");
 
-            if(World.TryGetTypeAt(position, out ushort actualType) && actualType == SpreadFluids.airIndex)
+            if(World.TryGetTypeAt(position, out ushort actualType) && actualType == BuiltinBlocks.Air)
             {
-                ServerManager.TryChangeBlock(position, SpreadFluids.waterIndex, player);
+                ServerManager.TryChangeBlock(position, Fluids.Water.Water.fluid, player);
 
                 Inventory inv = Inventory.GetInventory(player);
 
