@@ -33,19 +33,21 @@ namespace SimpleFluids.Fluids.Water
             {
                 JSONNode config = JSON.Deserialize(SpreadFluids.MODPATH + "/config.json");
 
-                if(!config.TryGetAs<int>("spreadDistance", out spreadDistance))
+                config.TryGetChild("water", out JSONNode waterConfig);
+
+                if(!waterConfig.TryGetAs<int>("spreadDistance", out spreadDistance))
                     spreadDistance = DEFAULT_DISTANCE;
                 else if(spreadDistance > MAX_DISTANCE || spreadDistance < MIN_DISTANCE)
                 {
-                    Log.Write(string.Format("<color=red>Warning: spreadDistance must be between {0} and {1} included</color>", MIN_DISTANCE, MAX_DISTANCE));
+                    Log.Write(string.Format("<color=red>Warning: Water spreadDistance must be between {0} and {1} included</color>", MIN_DISTANCE, MAX_DISTANCE));
                     spreadDistance = DEFAULT_DISTANCE;
                 }
 
-                if(!config.TryGetAs<float>("spreadSpeed", out spreadSpeed))
+                if(!waterConfig.TryGetAs<float>("spreadSpeed", out spreadSpeed))
                     spreadSpeed = DEFAULT_SPEED;
                 else if(spreadSpeed > MAX_SPEED || spreadSpeed < MIN_SPEED)
                 {
-                    Log.Write(string.Format("<color=red>Warning: spreadSpeed must be between {0} and {1} included</color>", MIN_SPEED, MAX_SPEED));
+                    Log.Write(string.Format("<color=red>Warning: Water spreadSpeed must be between {0} and {1} included</color>", MIN_SPEED, MAX_SPEED));
                     spreadSpeed = DEFAULT_SPEED;
                 }
             }
