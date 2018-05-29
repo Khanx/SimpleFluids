@@ -21,7 +21,7 @@ namespace SimpleFluids.Buckets
             ushort newBucketW = ItemTypes.IndexLookup.GetIndex("Khanx.SimpleFluids.WaterBucket");
             ushort newBucketL = ItemTypes.IndexLookup.GetIndex("Khanx.SimpleFluids.LavaBucket");
 
-            if(World.TryGetTypeAt(boxedData.item1.VoxelHit, out ushort voxelHitType) && ( voxelHitType == Fluids.Water.Water.fluid || voxelHitType == waterIndex || voxelHitType == Fluids.Lava.Lava.fluid ))
+            if(World.TryGetTypeAt(boxedData.item1.VoxelHit, out ushort voxelHitType) && ( voxelHitType == Fluids.Water.Water.fluid || voxelHitType == Fluids.Lava.Lava.fluid ))
             {
                 if(voxelHitType == Fluids.Water.Water.fluid)
                 {
@@ -38,7 +38,7 @@ namespace SimpleFluids.Buckets
                 }
                 else if(voxelHitType == Fluids.Lava.Lava.fluid)
                 {
-                    if(SpreadFluids.LookForSources(boxedData.item1.VoxelHit, Fluids.Lava.Lava.spreadDistance + 1, Fluids.Lava.Lava.fluid, Fluids.Lava.Lava.fakeFluid).Count == 0)
+                    if(SpreadFluids.LookForSources(boxedData.item1.VoxelHit, Fluids.Lava.Lava.spreadDistance + 1, Fluids.Lava.Lava.fluid, Fluids.Lava.Lava.fluid).Count == 0)
                         ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, BuiltinBlocks.Air, player);
                     else
                         ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, Fluids.Lava.Lava.fakeFluid, player);
