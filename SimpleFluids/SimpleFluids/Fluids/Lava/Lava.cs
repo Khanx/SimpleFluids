@@ -21,8 +21,9 @@ namespace SimpleFluids.Fluids.Lava
         public static ushort fluid;
         public static ushort fakeFluid;
 
-        [ModLoader.ModCallback(ModLoader.EModCallbackType.AfterAddingBaseTypes, "Khanx.SimpleFluids.Lava.LoadConfig")]
-        public static void LoadConfig(Dictionary<string, ItemTypesServer.ItemTypeRaw> a)
+        [ModLoader.ModCallback(ModLoader.EModCallbackType.AfterItemTypesDefined, "Khanx.SimpleFluids.Lava.LoadConfig")]
+        [ModLoader.ModCallbackDependsOn("Khanx.ExtendedAPI.LoadBaseTypes")]
+        public static void LoadConfig()
         {
             fluid = ItemTypes.IndexLookup.GetIndex("Khanx.SimpleFluids.Lava");
             fakeFluid = ItemTypes.IndexLookup.GetIndex("Khanx.SimpleFluids.Fake.Lava");
