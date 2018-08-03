@@ -1,26 +1,25 @@
 ﻿using ExtendedAPI.Types;
-using Pipliz;
-using Shared;
 
 
 namespace SimpleFluids.Fluids.Water
 {
     [AutoLoadType]
-    public class FakeSimpleWater : FakeFluid
+    public class FakeSimpleWater : Fluid
     {
         public FakeSimpleWater()
         {
             key = "Khanx.SimpleFluids.Fake.Water";
+            fluid = EFluids.Water;
         }
 
-        public override void OnRightClickOn(Players.Player player, Box<PlayerClickedData> boxedData)
+        public override void OnRightClickOn(Players.Player player, Pipliz.Box<Shared.PlayerClickedData> boxedData)
         {
             base.OnRightClickOn(player, boxedData);
         }
 
-        public override void RegisterOnUpdateAdjacent(ItemTypesServer.OnUpdateData onUpdateAdjacent)
+        public override void RegisterOnUpdateAdjacent(ItemTypesServer.OnUpdateData adjacent)
         {
-            base.RegisterOnUpdateAdjacent(onUpdateAdjacent);
+            base.RegisterOnUpdateAdjacent(adjacent);
         }
     }
 }

@@ -1,26 +1,25 @@
 ﻿using ExtendedAPI.Types;
-using Pipliz;
-using Shared;
 
 
 namespace SimpleFluids.Fluids.Lava
 {
     [AutoLoadType]
-    public class FakeSimpleLava : FakeFluid
+    public class FakeSimpleLava : Fluid
     {
         public FakeSimpleLava()
         {
             key = "Khanx.SimpleFluids.Fake.Lava";
+            fluid = EFluids.Lava;
         }
 
-        public override void OnRightClickOn(Players.Player player, Box<PlayerClickedData> boxedData)
+        public override void OnRightClickOn(Players.Player player, Pipliz.Box<Shared.PlayerClickedData> boxedData)
         {
             base.OnRightClickOn(player, boxedData);
         }
 
-        public override void RegisterOnUpdateAdjacent(ItemTypesServer.OnUpdateData onUpdateAdjacent)
+        public override void RegisterOnUpdateAdjacent(ItemTypesServer.OnUpdateData adjacent)
         {
-            base.RegisterOnUpdateAdjacent(onUpdateAdjacent);
+            base.RegisterOnUpdateAdjacent(adjacent);
         }
     }
 }

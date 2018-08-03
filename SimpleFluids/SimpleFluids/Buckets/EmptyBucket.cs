@@ -1,7 +1,8 @@
-﻿using BlockTypes.Builtin;
-using ExtendedAPI.Types;
+﻿using System.Collections.Generic;
+
 using Pipliz;
-using Shared;
+
+using ExtendedAPI.Types;
 
 
 namespace SimpleFluids.Buckets
@@ -9,59 +10,45 @@ namespace SimpleFluids.Buckets
     [AutoLoadType]
     public class EmptyBucket : BaseType
     {
-        public EmptyBucket() { key = "Khanx.SimpleFluids.EmptyBucket"; }
+        public static Dictionary<ushort, EFluids> fluidsInfo = new Dictionary<ushort, EFluids>();
+        public static ushort typeEmptyBucket;
 
-        public override void OnRightClickWith(Players.Player player, Box<PlayerClickedData> boxedData)
+        public EmptyBucket()
+        {
+            key = "Khanx.SimpleFluids.EmptyBucket";
+
+            typeEmptyBucket = ItemTypes.IndexLookup.GetIndex(key);
+        }
+
+        public override void OnRightClickWith(Players.Player player, Box<Shared.PlayerClickedData> boxedData)
         {
             if(null == player)
                 return;
 
-            ushort waterIndex = ItemTypes.IndexLookup.GetIndex("water");
-            ushort oldBucket = ItemTypes.IndexLookup.GetIndex("Khanx.SimpleFluids.EmptyBucket");
-            ushort newBucketW = ItemTypes.IndexLookup.GetIndex("Khanx.SimpleFluids.WaterBucket");
-            ushort newBucketL = ItemTypes.IndexLookup.GetIndex("Khanx.SimpleFluids.LavaBucket");
+            ushort typeTouch;
+            Vector3Int position = Vector3Int.maximum;
 
-            if(World.TryGetTypeAt(boxedData.item1.VoxelHit, out ushort voxelHitType) && ( voxelHitType == Fluids.Water.Water.fluid || voxelHitType == Fluids.Lava.Lava.fluid ))
+            if(World.TryGetTypeAt(boxedData.item1.VoxelHit, out typeTouch))
+                position = boxedData.item1.VoxelHit;
+            else if(World.TryGetTypeAt(boxedData.item1.VoxelBuild, out typeTouch))
+                position = boxedData.item1.VoxelBuild;
+            else
+                return;
+
+            foreach(ushort type in fluidsInfo.Keys)
             {
-                if(voxelHitType == Fluids.Water.Water.fluid)
-                {
-                    if(SpreadFluids.LookForSources(boxedData.item1.VoxelHit, Fluids.Water.Water.spreadDistance + 1, Fluids.Water.Water.fluid, Fluids.Water.Water.fluid).Count == 0)
-                        ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, BuiltinBlocks.Air, player);
-                    else
-                        ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, Fluids.Water.Water.fakeFluid, player);
+                if(type != typeTouch)
+                    continue;
 
-                    Inventory inv = Inventory.GetInventory(player);
-
-                    inv.TryRemove(oldBucket);
-                    if(!inv.TryAdd(newBucketW))
-                        Stockpile.GetStockPile(player).Add(newBucketW, 1);
-                }
-                else if(voxelHitType == Fluids.Lava.Lava.fluid)
-                {
-                    if(SpreadFluids.LookForSources(boxedData.item1.VoxelHit, Fluids.Lava.Lava.spreadDistance + 1, Fluids.Lava.Lava.fluid, Fluids.Lava.Lava.fluid).Count == 0)
-                        ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, BuiltinBlocks.Air, player);
-                    else
-                        ServerManager.TryChangeBlock(boxedData.item1.VoxelHit, Fluids.Lava.Lava.fakeFluid, player);
-
-                    Inventory inv = Inventory.GetInventory(player);
-
-                    inv.TryRemove(oldBucket);
-                    if(!inv.TryAdd(newBucketL))
-                        Stockpile.GetStockPile(player).Add(newBucketL, 1);
-                }
-            }
-            else if(World.TryGetTypeAt(boxedData.item1.VoxelBuild, out ushort voxelBuildType) && voxelBuildType == waterIndex)
-            {
-                if(SpreadFluids.LookForSources(boxedData.item1.VoxelBuild, Fluids.Water.Water.spreadDistance + 1, Fluids.Water.Water.fluid, Fluids.Water.Water.fakeFluid).Count == 0)
-                    ServerManager.TryChangeBlock(boxedData.item1.VoxelBuild, BuiltinBlocks.Air, player);
-                else
-                    ServerManager.TryChangeBlock(boxedData.item1.VoxelBuild, Fluids.Water.Water.fakeFluid, player);
+                FluidManager.Remove(position, fluidsInfo[type]);
 
                 Inventory inv = Inventory.GetInventory(player);
 
-                inv.TryRemove(oldBucket);
-                if(!inv.TryAdd(newBucketW))
-                    Stockpile.GetStockPile(player).Add(newBucketW, 1);
+                inv.TryRemove(typeEmptyBucket);
+                if(!inv.TryAdd(FluidManager._fluids[(int)fluidsInfo[type]].bucket))
+                    Stockpile.GetStockPile(player).Add(FluidManager._fluids[(int)fluidsInfo[type]].bucket, 1);
+
+                break;
             }
         }
     }

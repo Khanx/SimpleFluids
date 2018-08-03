@@ -1,37 +1,20 @@
-﻿using BlockTypes.Builtin;
-using ExtendedAPI.Types;
-using Pipliz;
-using Shared;
+﻿using ExtendedAPI.Types;
 
 
 namespace SimpleFluids.Buckets
 {
     [AutoLoadType]
-    public class LavaBucket : BaseType
+    public class LavaBucket : FluidBucket
     {
-        public LavaBucket() { key = "Khanx.SimpleFluids.LavaBucket"; }
-
-        public override void OnRightClickWith(Players.Player player, Box<PlayerClickedData> boxedData)
+        public LavaBucket()
         {
-            if(null == player)
-                return;
+            key = "Khanx.SimpleFluids.LavaBucket";
+            fluid = EFluids.Lava;
+        }
 
-            Vector3Int position = boxedData.item1.VoxelBuild;
-
-            ushort oldBucket = ItemTypes.IndexLookup.GetIndex("Khanx.SimpleFluids.LavaBucket");
-            ushort newBucket = ItemTypes.IndexLookup.GetIndex("Khanx.SimpleFluids.EmptyBucket");
-
-            if(World.TryGetTypeAt(position, out ushort actualType) && actualType == BuiltinBlocks.Air)
-            {
-                ServerManager.TryChangeBlock(position, SimpleFluids.Fluids.Lava.Lava.fluid, player);
-
-                Inventory inv = Inventory.GetInventory(player);
-
-                inv.TryRemove(oldBucket);
-                if(!inv.TryAdd(newBucket))
-                    Stockpile.GetStockPile(player).Add(newBucket, 1);
-            }
+        public override void OnRightClickOn(Players.Player player, Pipliz.Box<Shared.PlayerClickedData> boxedData)
+        {
+            base.OnRightClickOn(player, boxedData);
         }
     }
-
 }
