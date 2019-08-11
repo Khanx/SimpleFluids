@@ -1,39 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-
+using BlockTypes;
 using Pipliz;
-using Pipliz.JSON;
-
 
 namespace SimpleFluids
 {
-    public struct FluidInfo
-    {
-        public ushort source;
-        public ushort fake;
-        public ushort bucket;
-
-        public int distance;
-        public long time;
-
-        public FluidInfo(ushort source, ushort fake, ushort bucket, int distance, long time)
-        {
-            this.bucket = bucket;
-            this.source = source;
-            this.fake = fake;
-            this.distance = distance;
-            this.time = time;
-        }
-    }
-
-    public enum EFluids
-    {
-        Water = 0,
-        Lava = 1,
-        MAX
-    }
-
     [ModLoader.ModManager]
     public static class FluidManager
     {
@@ -45,20 +17,6 @@ namespace SimpleFluids
 
         public static string MODPATH;
 
-        [ModLoader.ModCallback(ModLoader.EModCallbackType.OnAssemblyLoaded, "Khanx.SimpleFluids.GetModPath")]
-        public static void GetModPath(string path)
-        {
-            MODPATH = System.IO.Path.GetDirectoryName(path).Replace("\\", "/");
-        }
-
-        public const int W_MAX_DISTANCE = 7;
-        public const int W_MIN_DISTANCE = 2;
-        public const int W_DEFAULT_DISTANCE = 3;
-
-        public const long W_MAX_SPEED = 500;
-        public const long W_MIN_SPEED = 200;
-        public const long W_DEFAULT_SPEED = 300;
-
         public const int L_MAX_DISTANCE = 7;
         public const int L_MIN_DISTANCE = 2;
         public const int L_DEFAULT_DISTANCE = 3;
@@ -66,6 +24,8 @@ namespace SimpleFluids
         public const long L_MAX_SPEED = 500;
         public const long L_MIN_SPEED = 200;
         public const long L_DEFAULT_SPEED = 300;
+        
+        /*
 
         [ModLoader.ModCallback(ModLoader.EModCallbackType.AfterWorldLoad, "Khanx.SimpleFluids.GetModPath")]
         public static void LoadConfig()
@@ -142,39 +102,11 @@ namespace SimpleFluids
             _fluids[(int)EFluids.Water] = Water;
             _fluids[(int)EFluids.Lava] = Lava;
             Buckets.EmptyBucket.fluidsInfo.Add(Water.source, EFluids.Water);
-            Buckets.EmptyBucket.fluidsInfo.Add(BlockTypes.Builtin.BuiltinBlocks.Water, EFluids.Water);
+            Buckets.EmptyBucket.fluidsInfo.Add(BuiltinBlocks.Indices.water, EFluids.Water);
             Buckets.EmptyBucket.fluidsInfo.Add(Lava.source, EFluids.Lava);
-
         }
-
-        [ModLoader.ModCallback(ModLoader.EModCallbackType.OnPlayerHit, "Khanx.SimpleFluids.NotKillPlayerOnHitWater")]
-        public static void NotKillPlayerOnHitWater(Players.Player player, ModLoader.OnHitData d)
-        {
-            if(null == player || null == d || d.HitSourceType != ModLoader.OnHitData.EHitSourceType.FallDamage)
-                return;
-
-            Vector3Int position = new Vector3Int(player.Position);
-            ushort hitType = 0;
-
-            int max = 10;
-            do
-            {
-                if(!World.TryGetTypeAt(position, out hitType))
-                    break;
-
-                if(hitType == _fluids[(int)EFluids.Water].source || hitType == _fluids[(int)EFluids.Water].fake)
-                {
-                    d.ResultDamage = 0;
-                    break;
-                }
-
-                position += Vector3Int.down;
-
-                if(max-- <= 0)
-                    break;
-            }
-            while(hitType == BlockTypes.Builtin.BuiltinBlocks.Air);
-        }
+        */
+        
 
         static FluidManager()
         {
@@ -223,22 +155,22 @@ namespace SimpleFluids
 
             if(start)
             {
-                Pipliz.Threading.ThreadManager.InvokeOnMainThread(() =>
+                ThreadManager.InvokeOnMainThread(() =>
                 {
-                    if(World.TryGetTypeAt(position, out ushort posType) && ( posType == BlockTypes.Builtin.BuiltinBlocks.Air || posType == info.fake ))
+                    if(World.TryGetTypeAt(position, out ushort posType) && ( posType == BuiltinBlocks.Indices.air || posType == info.fake ))
                         ServerManager.TryChangeBlock(position, info.source);
                 });
             }
             else
             {
-                Pipliz.Threading.ThreadManager.InvokeOnMainThread(() =>
+                ThreadManager.InvokeOnMainThread(() =>
                 {
-                    if(World.TryGetTypeAt(position, out ushort posType) && ( posType == BlockTypes.Builtin.BuiltinBlocks.Air ))
+                    if(World.TryGetTypeAt(position, out ushort posType) && ( posType == BuiltinBlocks.Indices.air ))
                         ServerManager.TryChangeBlock(position, info.fake);
                 });
             }
 
-            var down = position + Vector3Int.down;
+            Vector3Int down = position + Vector3Int.down;
 
             if(!World.TryGetTypeAt(down, out ushort typeDown))
                 return;
@@ -248,7 +180,7 @@ namespace SimpleFluids
                 return;
 
             //If down is air or fake.fluid -> SPREAD DOWN
-            if(typeDown == BlockTypes.Builtin.BuiltinBlocks.Air || typeDown == info.fake)
+            if(typeDown == BuiltinBlocks.Indices.air || typeDown == info.fake)
             {
                 _actions.Add(Time.MillisecondsSinceStart + info.time, delegate ()
                 {
@@ -266,7 +198,7 @@ namespace SimpleFluids
                 if(!World.TryGetTypeAt(adj, out ushort typeAdj))
                     continue;
 
-                if(typeAdj == BlockTypes.Builtin.BuiltinBlocks.Air || typeAdj == info.fake)
+                if(typeAdj == BuiltinBlocks.Indices.air || typeAdj == info.fake)
                 {
                     var adjDown = adj + Vector3Int.down;
 
@@ -277,7 +209,7 @@ namespace SimpleFluids
                         continue;
 
                     //Continue spreading down
-                    if(typeAdjD == BlockTypes.Builtin.BuiltinBlocks.Air)
+                    if(typeAdjD == BuiltinBlocks.Indices.air)
                     {
                         _actions.Add(Time.MillisecondsSinceStart + info.time, delegate ()
                         {
@@ -308,10 +240,10 @@ namespace SimpleFluids
             if(!World.TryGetTypeAt(position, out ushort posToRemove) && ( posToRemove != info.source && posToRemove != info.fake ))
                 return;
 
-            Pipliz.Threading.ThreadManager.InvokeOnMainThread(() =>
+            ThreadManager.InvokeOnMainThread(() =>
             {
                 if(newType == ushort.MaxValue)
-                    ServerManager.TryChangeBlock(position, BlockTypes.Builtin.BuiltinBlocks.Air);
+                    ServerManager.TryChangeBlock(position, BuiltinBlocks.Indices.air);
                 else
                     ServerManager.TryChangeBlock(position, newType);
             });
@@ -349,7 +281,7 @@ namespace SimpleFluids
 
                     _SomeAction.Set();
                 }
-                else if(typeAdj == BlockTypes.Builtin.BuiltinBlocks.Air)
+                else if(typeAdj == BuiltinBlocks.Indices.air)
                 {
                     var adjD = adj + Vector3Int.down;
 
@@ -392,10 +324,10 @@ namespace SimpleFluids
 
             if(ClosestSource(position, fluid) == Vector3Int.maximum)
             {
-                Pipliz.Threading.ThreadManager.InvokeOnMainThread(() =>
+                ThreadManager.InvokeOnMainThread(() =>
                 {
                     if(World.TryGetTypeAt(position, out ushort posToRemove) && ( posToRemove == info.fake ))
-                        ServerManager.TryChangeBlock(position, BlockTypes.Builtin.BuiltinBlocks.Air);
+                        ServerManager.TryChangeBlock(position, BuiltinBlocks.Indices.air);
                 });
             }
 
@@ -431,7 +363,7 @@ namespace SimpleFluids
 
                     _SomeAction.Set();
                 }
-                else if(typeAdj == BlockTypes.Builtin.BuiltinBlocks.Air)
+                else if(typeAdj == BuiltinBlocks.Indices.air)
                 {
                     var adjD = adj + Vector3Int.down;
 
@@ -455,9 +387,9 @@ namespace SimpleFluids
         {
             FluidInfo info = _fluids[(int)fluid];
 
-            LinkedList<TupleStruct<Vector3Int, int>> toVisit = new LinkedList<TupleStruct<Vector3Int, int>>();
+            LinkedList<(Vector3Int, int)> toVisit = new LinkedList<(Vector3Int, int)>();
 
-            toVisit.AddLast(new TupleStruct<Vector3Int, int>(position, 0));
+            toVisit.AddLast((position, 0));
 
             List<Vector3Int> alreadyVisited = new List<Vector3Int>();
 
@@ -466,17 +398,17 @@ namespace SimpleFluids
                 var node = toVisit.First.Value;
                 toVisit.RemoveFirst();
 
-                if(alreadyVisited.Contains(node.item1))
+                if(alreadyVisited.Contains(node.Item1))
                     continue;
 
-                alreadyVisited.Add(node.item1);
+                alreadyVisited.Add(node.Item1);
 
-                if(node.item2 == info.distance)
+                if(node.Item2 == info.distance)
                     continue;
 
                 foreach(var adjacent in adjacents)
                 {
-                    var adj = node.item1 + adjacent;
+                    var adj = node.Item1 + adjacent;
 
                     if(!World.TryGetTypeAt(adj, out ushort typeadj))
                         continue;
@@ -486,7 +418,7 @@ namespace SimpleFluids
 
                     if(typeadj == info.fake)
                         if(!alreadyVisited.Contains(adj))
-                            toVisit.AddLast(new TupleStruct<Vector3Int, int>(adj, node.item2 + 1));
+                            toVisit.AddLast((adj, node.Item2 + 1));
                 }
 
             }
